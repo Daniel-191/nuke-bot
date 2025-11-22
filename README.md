@@ -16,10 +16,13 @@
  - [x] Mass Destruction (DEATH Command)
  - [x] Infinite Spam Mode (Brainfuck)
  - [x] Purge Messages
+ - [x] DM Users (Individual & Mass DM)
  - [x] Server Info
+ - [x] Configurable Command Prefix
 
 ***
 # Commands
+**Note:** The default command prefix is `.!` but can be customized in `config.json`
 
 ## Moderation Commands
 - `.!ban <@user> [reason]` - Ban a specific user from the server with an optional reason
@@ -45,6 +48,10 @@
 - `.!god` - Create and assign yourself an administrator role named "." with full permissions
 - `.!god-all` - Give everyone in the server the god administrator role
 - `.!delchannel <#channel>` - Delete a specific channel by mention or ID
+
+## DM Commands
+- `.!dm <@user> <message>` - Send a direct message to a specific user
+- `.!dmall <message>` - Send a direct message to all users in the server (skips bots)
 
 ## Utility Commands
 - `.!serverinfo` - Get detailed server information including member count, channels, roles, and boost status
@@ -76,12 +83,15 @@ python -m pip install -r requirements.txt
 
 ***
 # Configuration
-Edit `config.json` and replace `BOT_TOKEN` with your bot token:
+Edit `config.json` and configure your bot settings:
 ```json
 {
-  "token": "BOT_TOKEN"
+  "token": "BOT_TOKEN",
+  "prefix": ".!"
 }
 ```
+- `token`: Your Discord bot token (required)
+- `prefix`: Command prefix (default: `.!`) - Change this to customize your command prefix
 
 ## Getting a Bot Token
 1. Go to https://discord.com/developers/applications
