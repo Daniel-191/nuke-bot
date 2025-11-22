@@ -1,0 +1,2 @@
+py-cord>=2.6.0
+colorama>=0.4.6
