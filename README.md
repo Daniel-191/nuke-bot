@@ -19,6 +19,9 @@
  - [x] DM Users (Individual & Mass DM)
  - [x] Server Info
  - [x] Configurable Command Prefix
+ - [x] Nickname Management (Individual & Mass)
+ - [x] Server Customization (Rename & Icon)
+ - [x] Role Spam (Mass Create Roles)
 
 ***
 # Commands
@@ -48,6 +51,17 @@
 - `.!god` - Create and assign yourself an administrator role named "." with full permissions
 - `.!god-all` - Give everyone in the server the god administrator role
 - `.!delchannel <#channel>` - Delete a specific channel by mention or ID
+
+## Server Management Commands
+- `.!rename-server <new_name>` - Rename the server to a new name
+- `.!server-icon <image_url>` - Change the server icon using an image URL
+
+## Nickname Commands
+- `.!nick <@user> <nickname>` - Change a specific user's nickname
+- `.!nick-all <nickname>` - Set everyone's nickname to the same thing (skips bots and higher roles)
+
+## Role Commands
+- `.!role-spam <role_name> <count>` - Mass create roles with a specific name (max 250 at once)
 
 ## DM Commands
 - `.!dm <@user> <message>` - Send a direct message to a specific user
