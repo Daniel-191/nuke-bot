@@ -1,5 +1,5 @@
 # Advanced Discord Nuke Bot
-* Python 3.9.6
+* Python 3.9+
 * py-cord 2.6.0+
 ***
 # Features
