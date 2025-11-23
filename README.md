@@ -28,6 +28,8 @@
 - [ ] Control/Nuke from console
 - [ ] Webpage interface
 - [ ] Clone/Backup server
+- [ ] Proxies
+- [ ] Rate limit bypass
 
 ***
 # Commands
