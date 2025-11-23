@@ -23,6 +23,12 @@
  - [x] Server Customization (Rename & Icon)
  - [x] Role Spam (Mass Create Roles)
 
+# Soon
+
+- [ ] Control/Nuke from console
+- [ ] Webpage interface
+- [ ] Clone/Backup server
+
 ***
 # Commands
 **Note:** The default command prefix is `.!` but can be customized in `config.json`
