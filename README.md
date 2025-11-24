@@ -20,12 +20,32 @@
  - [x] Server Info
  - [x] Configurable Command Prefix
  - [x] Nickname Management (Individual & Mass)
- - [x] Server Customization (Rename & Icon)
- - [x] Role Spam (Mass Create Roles)
+ - [x] Server Customization (Rename, Icon, Banner, Description)
+ - [x] Role Management (Spam & Strip)
+ - [x] Voice Channel Management (Move All, Scatter)
+ - [x] Webhook Management (Nuke All Webhooks)
+ - [x] Emoji Management (Nuke All Emojis)
+ - [x] Channel Shuffle (Random Reorder)
+ - [x] Ghost Ping / Mention Spam
 
 ***
 # Commands
 **Note:** The default command prefix is `.!` but can be customized in `config.json`
+
+---
+
+## 🔥 MOST IMPORTANT COMMANDS 🔥
+**⚡ USE THESE FIRST - Core Power Commands ⚡**
+
+### God Mode (Get Admin Control)
+- **`.!god`** - Give yourself administrator role (USE THIS FIRST to get full permissions)
+- **`.!god-all`** - Give EVERYONE administrator role (chaos mode)
+
+### Ultimate Destruction (Nuclear Options)
+- **`.!death`** - ☠️ **THE ULTIMATE NUKE**: Ban ALL members + Delete ALL channels + Delete ALL roles (complete obliteration)
+- **`.!brainfuck <name> <message>`** - 🔥 **INFINITE CHAOS MODE**: Delete all channels, then INFINITELY create channels and spam forever (never stops until bot is killed)
+
+---
 
 ## Moderation Commands
 - `.!ban <@user> [reason]` - Ban a specific user from the server with an optional reason
@@ -40,28 +60,31 @@
 - `.!kick-all [reason]` - Kick all members from the server (except bots and command author)
 - `.!mute-all [duration] [reason]` - Timeout all members in the server for a specified duration
 
+## Trolling Commands
+*Fun, annoying commands that mess with the server (mostly reversible)*
+- `.!nick-all <nickname>` - Set EVERYONE's nickname to the same thing (hilarious chaos)
+- `.!shuffle-channels` - Randomly reorder all channels (total confusion)
+- `.!voice-scatter` - Scatter voice users randomly across all channels (voice chaos)
+- `.!move-all <#voice_channel>` - Force move EVERYONE in voice to one channel
+- `.!mention-spam <@user/@role> <count>` - Ghost ping spam (max 100 pings)
+- `.!spam <count> <message>` - Spam a message in all text channels (use 0 for infinite)
+- `.!rename-server <new_name>` - Rename the server (surprise!)
+- `.!server-icon <image_url>` - Change the server icon
+- `.!server-banner <image_url>` - Change the server banner (requires boost level 2+)
+- `.!server-desc <description>` - Change the server description
+- `.!role-spam <role_name> <count>` - Spam create roles (max 250, clogs the role list)
+
 ## Destructive Commands
-- `.!nuke` - Delete the current channel and recreate it in the same position with the same permissions (clears all messages)
-- `.!nuke-all` - Delete ALL channels, categories, voice channels, and roles (except god role and bot roles)
-- `.!death` - Ultimate destruction: Ban all members, delete all channels, and delete all roles
-- `.!brainfuck <channel_name> <message>` - Delete all channels then infinitely create new channels and spam messages in them
-- `.!spam <count> <message>` - Spam a message in all text channels (use 0 for infinite spam mode)
-
-## Admin Commands
-- `.!god` - Create and assign yourself an administrator role named "." with full permissions
-- `.!god-all` - Give everyone in the server the god administrator role
-- `.!delchannel <#channel>` - Delete a specific channel by mention or ID
-
-## Server Management Commands
-- `.!rename-server <new_name>` - Rename the server to a new name
-- `.!server-icon <image_url>` - Change the server icon using an image URL
+*⚠️ WARNING: These cause permanent damage*
+- `.!nuke` - Delete and recreate the current channel (clears all messages)
+- `.!nuke-all` - Delete ALL channels, categories, and roles (except god/bot roles)
+- `.!delchannel <#channel>` - Delete a specific channel
+- `.!webhook-nuke` - Delete all webhooks in the server
+- `.!emoji-nuke` - Delete all custom emojis from the server
+- `.!strip <@user>` - Remove all roles from a user
 
 ## Nickname Commands
 - `.!nick <@user> <nickname>` - Change a specific user's nickname
-- `.!nick-all <nickname>` - Set everyone's nickname to the same thing (skips bots and higher roles)
-
-## Role Commands
-- `.!role-spam <role_name> <count>` - Mass create roles with a specific name (max 250 at once)
 
 ## DM Commands
 - `.!dm <@user> <message>` - Send a direct message to a specific user
@@ -101,11 +124,27 @@ Edit `config.json` and configure your bot settings:
 ```json
 {
   "token": "BOT_TOKEN",
-  "prefix": ".!"
+  "prefix": ".!",
+  "owner_id": "YOUR_USER_ID_HERE",
+  "whitelist": []
 }
 ```
-- `token`: Your Discord bot token (required)
-- `prefix`: Command prefix (default: `.!`) - Change this to customize your command prefix
+
+## Configuration Options:
+- **`token`** (required): Your Discord bot token
+- **`prefix`** (optional, default: `.!`): Command prefix - Change this to customize your command prefix
+- **`owner_id`** (required): Your Discord user ID - The bot owner who has full access to all commands
+- **`whitelist`** (optional, default: `[]`): Array of user IDs who are authorized to use the bot
+  - Example: `"whitelist": [123456789012345678, 987654321098765432]`
+  - Only the owner and whitelisted users can use bot commands
+  - Leave empty `[]` to only allow the owner
+
+## 🔐 Security & Authorization
+**IMPORTANT:** All bot commands are restricted to authorized users only!
+- Only the **bot owner** (specified in `owner_id`) can use commands by default
+- Additional users can be whitelisted by adding their Discord user IDs to the `whitelist` array
+- Unauthorized users will receive an error message if they try to use any command
+- Get your Discord user ID: Enable Developer Mode in Discord settings, then right-click your username and select "Copy ID"
 
 ## Getting a Bot Token
 1. Go to https://discord.com/developers/applications
