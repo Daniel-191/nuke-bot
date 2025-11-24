@@ -16,7 +16,8 @@ if not exist "config.json" (
         echo   "token": "YOUR_BOT_TOKEN",
         echo   "prefix": ".!",
         echo   "owner_id": "YOUR_USER_ID_HERE",
-        echo   "whitelist": []
+        echo   "whitelist": [],
+        echo   "language": "en"
         echo }
     ) > config.json
     echo [SUCCESS] Created config.json template!

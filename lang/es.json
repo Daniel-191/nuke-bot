@@ -1,0 +1,172 @@
+{
+  "bot_started": "BOT INICIADO - {bot_user} (ID: {bot_id}) | Conectado a {guild_count} servidor(es): {guild_list}",
+  "bot_prefix": "Prefijo del bot: {prefix} | ID del propietario: {owner_id}",
+  "bot_shutdown": "APAGADO DEL BOT - Iniciado por: {user} (ID: {user_id}) | Servidor: {guild} (ID: {guild_id})",
+  "bot_shutdown_complete": "APAGADO DEL BOT COMPLETADO",
+  "bot_joined_guild": "BOT SE UNIÓ AL SERVIDOR - Servidor: {guild} (ID: {guild_id}) | Miembros: {member_count} | Propietario: {owner} (ID: {owner_id})",
+  "bot_left_guild": "BOT SALIÓ DEL SERVIDOR - Servidor: {guild} (ID: {guild_id})",
+
+  "unauthorized": "ACCESO NO AUTORIZADO - Usuario: {user} (ID: {user_id}) | Comando: {command} | Servidor: {guild} (ID: {guild_id})",
+  "unauthorized_message": "⛔ ¡No estás autorizado para usar este bot!",
+
+  "command_executed": "COMANDO EJECUTADO - Usuario: {user} (ID: {user_id}) | Comando: {command} {args} | Servidor: {guild} (ID: {guild_id}) | Canal: #{channel}",
+  "command_error": "ERROR DE COMANDO - Usuario: {user} (ID: {user_id}) | Comando: {command} | Servidor: {guild} | Error: {error}",
+
+  "help_sent": "¡Menú de ayuda enviado a tus DMs!",
+  "help_dm_failed": "¡No pude enviarte un DM! Por favor habilita los DMs de miembros del servidor.",
+  "button_unauthorized": "⛔ ¡No puedes usar estos botones!",
+
+  "ban_success": "Baneado {member}",
+  "ban_yourself": "¡No puedes banearte a ti mismo!",
+  "ban_higher_role": "¡No puedes banear a alguien con un rol superior o igual!",
+  "ban_bot_no_permission": "¡No puedo banear a alguien con un rol superior o igual al mío!",
+  "ban_no_permission": "¡No tengo permiso para banear a este usuario!",
+  "ban_dm": "Has sido baneado en **{guild}** por {reason}",
+
+  "unban_success": "Desbaneado {user}",
+  "unban_not_found": "¡Usuario no encontrado o no está baneado!",
+  "unban_no_permission": "¡No tengo permiso para desbanear usuarios!",
+
+  "kick_success": "Expulsado {member}",
+  "kick_yourself": "¡No puedes expulsarte a ti mismo!",
+  "kick_higher_role": "¡No puedes expulsar a alguien con un rol superior o igual!",
+  "kick_bot_no_permission": "¡No puedo expulsar a alguien con un rol superior o igual al mío!",
+  "kick_no_permission": "¡No tengo permiso para expulsar a este usuario!",
+  "kick_dm": "Has sido expulsado de **{guild}** por {reason}",
+
+  "mute_success": "Silenciado {member} por {duration}",
+  "mute_yourself": "¡No puedes silenciarte a ti mismo!",
+  "mute_higher_role": "¡No puedes silenciar a alguien con un rol superior o igual!",
+  "mute_bot_no_permission": "¡No puedo silenciar a alguien con un rol superior o igual al mío!",
+  "mute_invalid_unit": "¡Unidad de tiempo inválida! Usa s (segundos), m (minutos), h (horas), o d (días)",
+  "mute_invalid_format": "¡Formato de duración inválido! Ejemplo: 10m, 1h, 30s, 1d",
+  "mute_no_permission": "¡No tengo permiso para silenciar a este usuario!",
+  "mute_dm": "Has sido silenciado en **{guild}** por {reason}",
+
+  "unmute_success": "Desilenciado {member}",
+  "unmute_no_permission": "¡No tengo permiso para remover el silencio de este usuario!",
+
+  "purge_success": "Purgados {count} mensajes en {channel}",
+  "purge_invalid_amount": "¡Por favor especifica un número positivo de mensajes para purgar!",
+  "purge_too_many": "¡Solo puedes purgar hasta 1000 mensajes a la vez!",
+  "purge_no_permission": "¡No tengo permiso para eliminar mensajes en este canal!",
+
+  "god_activated": "Modo dios activado para {user}",
+  "god_no_permission": "¡No tengo permiso para crear roles o asignarlos!",
+
+  "god_all_initiated": "👑 MODO DIOS PARA TODOS INICIADO 👑\nDando permisos de administrador a todos los miembros...",
+  "god_all_complete": "Modo dios activado para {count} miembros",
+
+  "nuke_starting": "Iniciando operación nuke-all... Esto puede tomar un tiempo.",
+  "nuke_complete": "Nuke-all completado: {channels} canales, {categories} categorías, {roles} roles eliminados",
+  "nuke_no_permission": "¡No tengo permiso para realizar la operación nuke-all!",
+
+  "delchannel_success": "Eliminado #{channel}",
+  "delchannel_no_permission": "¡No tengo permiso para eliminar ese canal!",
+
+  "nuke_channel_success": "Nukeado {channel}",
+  "nuke_channel_no_permission": "¡No tengo permiso para eliminar/crear canales!",
+
+  "ban_all_starting": "Iniciando operación ban-all... Esto puede tomar un tiempo.",
+  "ban_all_complete": "Baneados {count} miembros",
+  "ban_all_no_permission": "¡No tengo permiso para banear miembros!",
+
+  "kick_all_starting": "Iniciando operación kick-all... Esto puede tomar un tiempo.",
+  "kick_all_complete": "Expulsados {count} miembros",
+  "kick_all_no_permission": "¡No tengo permiso para expulsar miembros!",
+
+  "mute_all_starting": "Iniciando operación mute-all por {duration}... Esto puede tomar un tiempo.",
+  "mute_all_complete": "Silenciados {count} miembros por {duration}",
+  "mute_all_no_permission": "¡No tengo permiso para silenciar miembros!",
+
+  "death_initiated": "⚠️ COMANDO DEATH INICIADO ⚠️\nEliminando todos los canales, roles y baneando a todos los miembros...",
+  "death_complete": "DEATH completado: {banned} baneados, {channels} canales eliminados, {roles} roles eliminados",
+  "death_no_permission": "¡No tengo permiso para ejecutar el comando DEATH!",
+
+  "brainfuck_initiated": "🔥 MODO INFINITO BRAINFUCK INICIADO 🔥\nEliminando todos los canales...\n¡Luego creando canales y spameando continuamente por siempre!",
+  "brainfuck_active": "⚡ MODO INFINITO ACTIVO - ¡Creando y spameando por siempre!",
+  "brainfuck_no_permission": "¡No tengo permiso para ejecutar el comando BRAINFUCK!",
+
+  "spam_infinite_started": "⚠️ MODO SPAM INFINITO ACTIVADO ⚠️\nSpameando en todos los canales: \"{message}\"\n\n¡Esto continuará indefinidamente!",
+  "spam_started": "Spam iniciado: Enviando \"{message}\" {count} veces en cada canal...",
+  "spam_complete": "Spam completado: {total} mensajes enviados en {channels} canales",
+  "spam_no_permission": "¡No tengo permiso para enviar mensajes en canales!",
+
+  "rename_server_success": "Servidor renombrado a **{name}**",
+  "rename_server_no_permission": "¡No tengo permiso para renombrar el servidor!",
+
+  "server_icon_success": "Ícono del servidor actualizado exitosamente",
+  "server_icon_failed": "¡Error al descargar la imagen de la URL!",
+  "server_icon_no_permission": "¡No tengo permiso para cambiar el ícono del servidor!",
+
+  "server_banner_success": "Banner del servidor actualizado exitosamente",
+  "server_banner_no_feature": "¡Este servidor no tiene acceso a banners! (Requiere nivel de boost 2)",
+  "server_banner_failed": "¡Error al descargar la imagen de la URL!",
+  "server_banner_no_permission": "¡No tengo permiso para cambiar el banner del servidor!",
+
+  "server_desc_success": "Descripción del servidor actualizada exitosamente",
+  "server_desc_no_permission": "¡No tengo permiso para cambiar la descripción del servidor!",
+
+  "nick_success": "Cambiado el apodo de {member} a **{nickname}**",
+  "nick_higher_role": "¡No puedo cambiar el apodo de {member} - tienen un rol superior o igual al mío!",
+  "nick_no_permission": "¡No tengo permiso para cambiar el apodo de {member}!",
+
+  "nick_all_starting": "Iniciando operación nick-all... Estableciendo todos los apodos a \"{nickname}\"",
+  "nick_all_complete": "Nick-all completado: {success} apodos cambiados, {failed} fallidos",
+  "nick_all_no_permission": "¡No tengo permiso para cambiar apodos!",
+
+  "role_spam_starting": "Iniciando operación role-spam... Creando {count} roles llamados \"{name}\"",
+  "role_spam_complete": "Role-spam completado: {created} roles creados, {failed} fallidos",
+  "role_spam_invalid_count": "¡Por favor especifica un número positivo de roles para crear!",
+  "role_spam_too_many": "¡Solo puedes crear hasta 250 roles a la vez!",
+  "role_spam_no_permission": "¡No tengo permiso para crear roles!",
+
+  "webhook_nuke_starting": "Iniciando operación webhook-nuke... Eliminando todos los webhooks.",
+  "webhook_nuke_complete": "Webhook-nuke completado: {count} webhooks eliminados",
+  "webhook_nuke_no_permission": "¡No tengo permiso para gestionar webhooks!",
+
+  "strip_yourself": "¡No puedes quitarte tus propios roles!",
+  "strip_higher_role": "¡No puedo quitar roles de {member} - tienen un rol superior o igual al mío!",
+  "strip_no_roles": "¡{member} no tiene roles removibles!",
+  "strip_success": "Quitados {count} roles de {member}",
+  "strip_no_permission": "¡No tengo permiso para quitar roles de {member}!",
+
+  "emoji_nuke_starting": "Iniciando operación emoji-nuke... Eliminando todos los emojis personalizados.",
+  "emoji_nuke_complete": "Emoji-nuke completado: {count} emojis eliminados",
+  "emoji_nuke_no_permission": "¡No tengo permiso para gestionar emojis!",
+
+  "shuffle_channels_starting": "Iniciando operación shuffle-channels... Reordenando todos los canales aleatoriamente.",
+  "shuffle_channels_complete": "Shuffle-channels completado: {count} canales reordenados",
+  "shuffle_channels_no_permission": "¡No tengo permiso para gestionar canales!",
+
+  "voice_scatter_starting": "Iniciando operación voice-scatter... Dispersando {count} usuarios en {channels} canales.",
+  "voice_scatter_complete": "Voice-scatter completado: {moved} usuarios movidos",
+  "voice_scatter_need_channels": "¡Se necesitan al menos 2 canales de voz para dispersar usuarios!",
+  "voice_scatter_no_users": "¡No hay usuarios en canales de voz!",
+  "voice_scatter_no_permission": "¡No tengo permiso para mover miembros!",
+
+  "move_all_starting": "Iniciando operación move-all... Moviendo {count} usuarios a {channel}.",
+  "move_all_complete": "Move-all completado: {moved} usuarios movidos a {channel}",
+  "move_all_no_users": "¡No hay usuarios en canales de voz!",
+  "move_all_no_permission": "¡No tengo permiso para mover miembros!",
+
+  "mention_spam_starting": "Iniciando operación mention-spam... Enviando {count} menciones.",
+  "mention_spam_complete": "Mention-spam completado: {sent} menciones enviadas",
+  "mention_spam_invalid_count": "¡Por favor especifica un número positivo!",
+  "mention_spam_too_many": "¡Máximo 100 menciones a la vez!",
+  "mention_spam_no_permission": "¡No tengo permiso para enviar mensajes o mencionar!",
+
+  "dm_success": "Mensaje enviado a {user}",
+  "dm_failed": "No se pudo enviar DM a {user} - tienen los DMs deshabilitados",
+
+  "dmall_starting": "Iniciando operación DM-all... Enviando mensaje a todos los miembros.",
+  "dmall_complete": "DM-all completado: {success} mensajes enviados, {failed} fallidos",
+
+  "serverinfo_sent": "¡Información del servidor enviada a tus DMs!",
+  "serverinfo_dm_failed": "¡No pude enviarte un DM! Por favor habilita los DMs de miembros del servidor.",
+
+  "shutdown_message": "Bot apagándose",
+  "shutdown_farewell": "🔴 Bot apagándose...",
+
+  "error_occurred": "Ocurrió un error: {error}"
+}

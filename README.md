@@ -79,7 +79,8 @@ Edit `config.json` and configure your bot settings:
   "token": "BOT_TOKEN",
   "prefix": ".!",
   "owner_id": "YOUR_USER_ID_HERE",
-  "whitelist": []
+  "whitelist": [],
+  "language": "en"
 }
 ```
 
@@ -91,6 +92,15 @@ Edit `config.json` and configure your bot settings:
   - Example: `"whitelist": [123456789012345678, 987654321098765432]`
   - Only the owner and whitelisted users can use bot commands
   - Leave empty `[]` to only allow the owner
+- **`language`** (optional, default: `"en"`): Bot language for messages and responses
+  - Available languages:
+    - `"en"` - English
+    - `"es"` - Spanish (Español)
+    - `"fr"` - French (Français)
+    - `"de"` - German (Deutsch)
+    - `"pt"` - Portuguese (Português)
+  - The bot will use the specified language for all messages, embeds, and responses
+  - If language file is not found, it will fallback to English
 
 ## 🔐 Security & Authorization
 **IMPORTANT:** All bot commands are restricted to authorized users only!
