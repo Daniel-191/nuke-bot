@@ -1,5 +1,5 @@
-# Simple Discord Nuke Bot
-* Python 3.9.6
+# Advanced Discord Nuke Bot
+* Python 3.9+
 * py-cord 2.6.0+
 ***
 # Features
@@ -27,6 +27,14 @@
  - [x] Emoji Management (Nuke All Emojis)
  - [x] Channel Shuffle (Random Reorder)
  - [x] Ghost Ping / Mention Spam
+
+# Soon
+
+- [ ] Control/Nuke from console
+- [ ] Webpage interface
+- [ ] Clone/Backup server
+- [ ] Proxies
+- [ ] Rate limit bypass
 
 ***
 # Commands
