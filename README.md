@@ -10,21 +10,17 @@
  - [x] Ban All Members
  - [x] Kick All Members
  - [x] Mute All Members
- - [x] Delete Roles
+ - [x] Delete All Roles
  - [x] Create Channels
  - [x] Spam Messages
- - [x] Channel Nuke (Delete & Recreate)
- - [x] God Mode (Admin Role)
- - [x] Mass Destruction (DEATH Command)
- - [x] Infinite Spam Mode (Brainfuck)
- - [x] Purge Messages
+ - [x] Channel Nuking
+ - [x] Give all admin
+ - [x] Give self admin
  - [x] DM Users (Individual & Mass DM)
- - [x] Server Info
- - [x] Configurable Command Prefix
  - [x] Nickname Management (Individual & Mass)
  - [x] Server Customization (Rename, Icon, Banner, Description)
- - [x] Role Management (Spam & Strip)
- - [x] Voice Channel Management (Move All, Scatter)
+ - [x] Role Management (Spam create & Strip roles)
+ - [x] Users in Voice channels control (Move All, Scatter)
  - [x] Webhook Management (Nuke All Webhooks)
  - [x] Emoji Management (Nuke All Emojis)
  - [x] Channel Shuffle (Random Reorder)
@@ -36,11 +32,10 @@
 - [ ] Webpage interface
 - [ ] Clone/Backup server
 - [ ] Proxies
-- [ ] Rate limit bypass
 
 ***
 # Commands
-📋 **[View all commands and usage →](COMMANDS.md)**
+**[View all commands and usage →](COMMANDS.md)**
 
 For a complete list of all available commands with detailed descriptions and usage examples, see **[COMMANDS.md](COMMANDS.md)**
 
