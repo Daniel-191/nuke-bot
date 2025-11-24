@@ -16,8 +16,8 @@ def load_config():
             return json.load(f)
     except FileNotFoundError:
         print(f'{Fore.RED}Error: config.json not found!{Style.RESET_ALL}')
-        print('Please create a config.json file with your bot token.')
-        print('Example: {"token": "BOT_TOKEN", "prefix": ".!"}')
+        print('Please create a config.json file with your bot token and owner ID.')
+        print('Example: {"token": "BOT_TOKEN", "prefix": ".!", "owner_id": "YOUR_USER_ID", "whitelist": []}')
         exit(1)
     except json.JSONDecodeError:
         print(f'{Fore.RED}Error: config.json is not valid JSON!{Style.RESET_ALL}')
@@ -33,8 +33,45 @@ bot = commands.Bot(command_prefix=config.get("prefix", ".!"), intents=intents, h
 
 @bot.event
 async def on_ready():
+    print("""
+███╗░░██╗██╗░░░██╗██╗░░██╗███████╗  ██████╗░░█████╗░████████╗
+████╗░██║██║░░░██║██║░██╔╝██╔════╝  ██╔══██╗██╔══██╗╚══██╔══╝
+██╔██╗██║██║░░░██║█████═╝░█████╗░░  ██████╦╝██║░░██║░░░██║░░░
+██║╚████║██║░░░██║██╔═██╗░██╔══╝░░  ██╔══██╗██║░░██║░░░██║░░░
+██║░╚███║╚██████╔╝██║░╚██╗███████╗  ██████╦╝╚█████╔╝░░░██║░░░
+╚═╝░░╚══╝░╚═════╝░╚═╝░░╚═╝╚══════╝  ╚═════╝░░╚════╝░░░░╚═╝░░░
+\n\n""")
+
     print(f'{Fore.GREEN}[READY] {bot.user} is now online!')
     print(f'{Fore.GREEN}[READY] Bot ID: {bot.user.id}{Style.RESET_ALL}')
+
+# Authorization check function
+def is_authorized():
+    """Check if user is bot owner or in whitelist"""
+    async def predicate(ctx):
+        owner_id = config.get("owner_id")
+        whitelist = config.get("whitelist", [])
+
+        # Convert owner_id to int if it's a string
+        if owner_id and isinstance(owner_id, str) and owner_id.isdigit():
+            owner_id = int(owner_id)
+
+        # Check if user is owner or in whitelist
+        if ctx.author.id == owner_id or ctx.author.id in whitelist:
+            return True
+
+        # User is not authorized
+        print(f'{Fore.RED}[UNAUTHORIZED] {Fore.WHITE}{ctx.author.display_name} (ID: {ctx.author.id}) attempted to use {ctx.command.name} in {ctx.guild.name}{Style.RESET_ALL}')
+
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        return False
+
+    return commands.check(predicate)
 
 async def send_dm(ctx, content=None, embed=None):
     """Helper function to delete command, send ephemeral-style message, and DM"""
@@ -63,45 +100,179 @@ async def send_dm(ctx, content=None, embed=None):
         # DMs are disabled, but they already got the channel message
         pass
 
+class HelpView(discord.ui.View):
+    def __init__(self, pages, author):
+        super().__init__(timeout=60)
+        self.pages = pages
+        self.current_page = 0
+        self.author = author
+        self.update_buttons()
+
+    def update_buttons(self):
+        # Disable/enable buttons based on current page
+        self.previous_button.disabled = self.current_page == 0
+        self.next_button.disabled = self.current_page == len(self.pages) - 1
+
+    def get_embed(self):
+        return self.pages[self.current_page]
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        # Only allow the command author to use buttons
+        if interaction.user.id != self.author.id:
+            await interaction.response.send_message("⛔ You cannot use these buttons!", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.button(label="◀", style=discord.ButtonStyle.primary)
+    async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.current_page -= 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    @discord.ui.button(label="▶", style=discord.ButtonStyle.primary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.current_page += 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+@is_authorized()
 @bot.command(name='help')
 async def help_command(ctx):
-    """Display all available commands"""
+    """Display all available commands with pagination"""
     print(f'{Fore.CYAN}[HELP] {Fore.WHITE}Help requested by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
     prefix = config.get("prefix", ".!")
-    embed = discord.Embed(
-        title="Bot Commands",
-        description="List of available commands",
+
+    # Delete command message
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    # Define command pages (5 commands per page)
+    pages = []
+
+    # Page 1: Core Power Commands
+    embed1 = discord.Embed(
+        title="🔥 Bot Commands - Core Power 🔥",
+        description="Most important commands for taking control",
+        color=discord.Color.gold()
+    )
+    embed1.add_field(name=f"{prefix}god", value="Give yourself administrator role", inline=False)
+    embed1.add_field(name=f"{prefix}god-all", value="Give EVERYONE administrator permissions", inline=False)
+    embed1.add_field(name=f"{prefix}death", value="☠️ Ultimate destruction - Ban all, delete all channels and roles", inline=False)
+    embed1.add_field(name=f"{prefix}brainfuck <name> <message>", value="🔥 Delete all channels, infinitely create and spam", inline=False)
+    embed1.add_field(name=f"{prefix}help", value="Show this help message", inline=False)
+    embed1.set_footer(text=f"Page 1/8 • Use buttons to navigate")
+    pages.append(embed1)
+
+    # Page 2: Moderation Commands
+    embed2 = discord.Embed(
+        title="Bot Commands - Moderation",
+        description="Basic moderation commands",
         color=discord.Color.blue()
     )
-    embed.add_field(name=f"{prefix}help", value="Show this help message", inline=False)
-    embed.add_field(name=f"{prefix}god", value="Give yourself administrator role", inline=False)
-    embed.add_field(name=f"{prefix}god-all", value="Give EVERYONE administrator permissions", inline=False)
-    embed.add_field(name=f"{prefix}rename-server <name>", value="Rename the server", inline=False)
-    embed.add_field(name=f"{prefix}server-icon <url>", value="Change the server icon", inline=False)
-    embed.add_field(name=f"{prefix}nick <@user> <nickname>", value="Change a user's nickname", inline=False)
-    embed.add_field(name=f"{prefix}nick-all <nickname>", value="Set everyone's nickname", inline=False)
-    embed.add_field(name=f"{prefix}role-spam <name> <count>", value="Mass create roles", inline=False)
-    embed.add_field(name=f"{prefix}delchannel <#channel>", value="Delete a specific channel", inline=False)
-    embed.add_field(name=f"{prefix}nuke", value="Delete and recreate channel to clear all messages", inline=False)
-    embed.add_field(name=f"{prefix}nuke-all", value="Delete ALL channels, categories, and roles (except god/bot roles)", inline=False)
-    embed.add_field(name=f"{prefix}purge <amount>", value="Delete a number of messages from the channel", inline=False)
-    embed.add_field(name=f"{prefix}ban <@user> [reason]", value="Ban a user from the server", inline=False)
-    embed.add_field(name=f"{prefix}unban <user_id>", value="Unban a user by their ID", inline=False)
-    embed.add_field(name=f"{prefix}ban-all [reason]", value="Ban all members in the server", inline=False)
-    embed.add_field(name=f"{prefix}kick <@user> [reason]", value="Kick a user from the server", inline=False)
-    embed.add_field(name=f"{prefix}kick-all [reason]", value="Kick all members in the server", inline=False)
-    embed.add_field(name=f"{prefix}mute <@user> [duration] [reason]", value="Timeout a user (e.g., 10m, 1h, 1d)", inline=False)
-    embed.add_field(name=f"{prefix}unmute <@user>", value="Remove timeout from a user", inline=False)
-    embed.add_field(name=f"{prefix}mute-all [duration] [reason]", value="Timeout all members in the server", inline=False)
-    embed.add_field(name=f"{prefix}death", value="☠️ Ultimate destruction - Ban all, delete all channels and roles", inline=False)
-    embed.add_field(name=f"{prefix}brainfuck <name> <message>", value="Delete all channels, create spam channels, infinite spam", inline=False)
-    embed.add_field(name=f"{prefix}spam <count> <message>", value="Spam message in all channels (0 = infinite)", inline=False)
-    embed.add_field(name=f"{prefix}dmall <message>", value="DM all users in the server", inline=False)
-    embed.add_field(name=f"{prefix}dm <@user> <message>", value="DM a specific user", inline=False)
-    embed.add_field(name=f"{prefix}serverinfo", value="Get detailed server information (sent to DMs)", inline=False)
-    embed.add_field(name=f"{prefix}shutdown", value="Shutdown the bot (Admin only)", inline=False)
-    await send_dm(ctx, embed=embed)
+    embed2.add_field(name=f"{prefix}ban <@user> [reason]", value="Ban a user from the server", inline=False)
+    embed2.add_field(name=f"{prefix}unban <user_id>", value="Unban a user by their ID", inline=False)
+    embed2.add_field(name=f"{prefix}kick <@user> [reason]", value="Kick a user from the server", inline=False)
+    embed2.add_field(name=f"{prefix}mute <@user> [duration] [reason]", value="Timeout a user (e.g., 10m, 1h, 1d)", inline=False)
+    embed2.add_field(name=f"{prefix}unmute <@user>", value="Remove timeout from a user", inline=False)
+    embed2.set_footer(text=f"Page 2/8 • Use buttons to navigate")
+    pages.append(embed2)
 
+    # Page 3: Mass Moderation
+    embed3 = discord.Embed(
+        title="Bot Commands - Mass Moderation",
+        description="Mass moderation commands",
+        color=discord.Color.red()
+    )
+    embed3.add_field(name=f"{prefix}ban-all [reason]", value="Ban all members in the server", inline=False)
+    embed3.add_field(name=f"{prefix}kick-all [reason]", value="Kick all members in the server", inline=False)
+    embed3.add_field(name=f"{prefix}mute-all [duration] [reason]", value="Timeout all members in the server", inline=False)
+    embed3.add_field(name=f"{prefix}purge <amount>", value="Delete a number of messages from the channel", inline=False)
+    embed3.set_footer(text=f"Page 3/8 • Use buttons to navigate")
+    pages.append(embed3)
+
+    # Page 4: Destructive Commands
+    embed4 = discord.Embed(
+        title="Bot Commands - Destructive",
+        description="⚠️ Commands that cause permanent damage",
+        color=discord.Color.dark_red()
+    )
+    embed4.add_field(name=f"{prefix}nuke", value="Delete and recreate channel to clear all messages", inline=False)
+    embed4.add_field(name=f"{prefix}nuke-all", value="Delete ALL channels, categories, and roles", inline=False)
+    embed4.add_field(name=f"{prefix}delchannel <#channel>", value="Delete a specific channel", inline=False)
+    embed4.add_field(name=f"{prefix}webhook-nuke", value="Delete all webhooks in server", inline=False)
+    embed4.add_field(name=f"{prefix}emoji-nuke", value="Delete all custom emojis", inline=False)
+    embed4.set_footer(text=f"Page 4/8 • Use buttons to navigate")
+    pages.append(embed4)
+
+    # Page 5: Trolling Commands
+    embed5 = discord.Embed(
+        title="Bot Commands - Trolling",
+        description="Fun, annoying commands (mostly reversible)",
+        color=discord.Color.purple()
+    )
+    embed5.add_field(name=f"{prefix}nick-all <nickname>", value="Set everyone's nickname", inline=False)
+    embed5.add_field(name=f"{prefix}shuffle-channels", value="Randomly reorder all channels", inline=False)
+    embed5.add_field(name=f"{prefix}voice-scatter", value="Scatter users across voice channels", inline=False)
+    embed5.add_field(name=f"{prefix}move-all <#voice>", value="Move all users to voice channel", inline=False)
+    embed5.add_field(name=f"{prefix}mention-spam <target> <count>", value="Ghost ping spam (max 100)", inline=False)
+    embed5.set_footer(text=f"Page 5/8 • Use buttons to navigate")
+    pages.append(embed5)
+
+    # Page 6: Server Management
+    embed6 = discord.Embed(
+        title="Bot Commands - Server Management",
+        description="Server customization commands",
+        color=discord.Color.teal()
+    )
+    embed6.add_field(name=f"{prefix}rename-server <name>", value="Rename the server", inline=False)
+    embed6.add_field(name=f"{prefix}server-icon <url>", value="Change the server icon", inline=False)
+    embed6.add_field(name=f"{prefix}server-banner <url>", value="Change server banner (boost lvl 2+)", inline=False)
+    embed6.add_field(name=f"{prefix}server-desc <text>", value="Change server description", inline=False)
+    embed6.add_field(name=f"{prefix}nick <@user> <nickname>", value="Change a user's nickname", inline=False)
+    embed6.set_footer(text=f"Page 6/8 • Use buttons to navigate")
+    pages.append(embed6)
+
+    # Page 7: Role & Spam Commands
+    embed7 = discord.Embed(
+        title="Bot Commands - Roles & Spam",
+        description="Role management and spam commands",
+        color=discord.Color.orange()
+    )
+    embed7.add_field(name=f"{prefix}role-spam <name> <count>", value="Mass create roles", inline=False)
+    embed7.add_field(name=f"{prefix}strip <@user>", value="Remove all roles from a user", inline=False)
+    embed7.add_field(name=f"{prefix}spam <count> <message>", value="Spam message in all channels (0 = infinite)", inline=False)
+    embed7.set_footer(text=f"Page 7/8 • Use buttons to navigate")
+    pages.append(embed7)
+
+    # Page 8: Utility & DM Commands
+    embed8 = discord.Embed(
+        title="Bot Commands - Utility & DM",
+        description="Utility and messaging commands",
+        color=discord.Color.green()
+    )
+    embed8.add_field(name=f"{prefix}dm <@user> <message>", value="DM a specific user", inline=False)
+    embed8.add_field(name=f"{prefix}dmall <message>", value="DM all users in the server", inline=False)
+    embed8.add_field(name=f"{prefix}serverinfo", value="Get detailed server information", inline=False)
+    embed8.add_field(name=f"{prefix}shutdown", value="Shutdown the bot (Admin only)", inline=False)
+    embed8.set_footer(text=f"Page 8/8 • Use buttons to navigate")
+    pages.append(embed8)
+
+    # Create view and send message
+    view = HelpView(pages, ctx.author)
+
+    # Send to DM
+    try:
+        message = await ctx.author.send(embed=view.get_embed(), view=view)
+        # Send ephemeral confirmation in channel
+        await ctx.send("Help menu sent to your DMs!", delete_after=3)
+    except discord.Forbidden:
+        # DMs disabled, send in channel instead
+        message = await ctx.send(embed=view.get_embed(), view=view)
+
+
+@is_authorized()
 @bot.command(name='delchannel')
 @commands.has_permissions(manage_channels=True)
 async def delchannel(ctx, channel: discord.TextChannel):
@@ -136,6 +307,7 @@ async def delchannel(ctx, channel: discord.TextChannel):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='nuke')
 @commands.has_permissions(manage_channels=True)
 async def nuke(ctx):
@@ -190,6 +362,7 @@ async def nuke(ctx):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='nuke-all')
 @commands.has_permissions(administrator=True)
 async def nuke_all(ctx):
@@ -279,6 +452,7 @@ async def nuke_all(ctx):
         except:
             pass
 
+@is_authorized()
 @bot.command(name='purge')
 @commands.has_permissions(manage_messages=True)
 async def purge(ctx, amount: int):
@@ -319,6 +493,7 @@ async def purge(ctx, amount: int):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='ban')
 @commands.has_permissions(ban_members=True)
 async def ban(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
@@ -358,6 +533,7 @@ async def ban(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='unban')
 @commands.has_permissions(ban_members=True)
 async def unban(ctx, user_id: int):
@@ -378,6 +554,7 @@ async def unban(ctx, user_id: int):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='kick')
 @commands.has_permissions(kick_members=True)
 async def kick(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
@@ -417,6 +594,7 @@ async def kick(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='mute')
 @commands.has_permissions(moderate_members=True)
 async def mute(ctx, member: discord.Member, duration: str = "10m", *, reason: str = "BYE BYE"):
@@ -470,6 +648,7 @@ async def mute(ctx, member: discord.Member, duration: str = "10m", *, reason: st
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='unmute')
 @commands.has_permissions(moderate_members=True)
 async def unmute(ctx, member: discord.Member):
@@ -487,6 +666,7 @@ async def unmute(ctx, member: discord.Member):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='god')
 async def god(ctx):
     """Give user administrator role"""
@@ -534,6 +714,7 @@ async def god(ctx):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='god-all')
 @commands.has_permissions(administrator=True)
 async def god_all(ctx):
@@ -609,6 +790,7 @@ async def god_all(ctx):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='rename-server')
 @commands.has_permissions(administrator=True)
 async def rename_server(ctx, *, new_name: str):
@@ -639,6 +821,7 @@ async def rename_server(ctx, *, new_name: str):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='server-icon')
 @commands.has_permissions(administrator=True)
 async def server_icon(ctx, image_url: str):
@@ -676,6 +859,7 @@ async def server_icon(ctx, image_url: str):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='nick')
 @commands.has_permissions(manage_nicknames=True)
 async def nick(ctx, member: discord.Member, *, nickname: str):
@@ -711,6 +895,7 @@ async def nick(ctx, member: discord.Member, *, nickname: str):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='nick-all')
 @commands.has_permissions(administrator=True)
 async def nick_all(ctx, *, nickname: str):
@@ -772,6 +957,7 @@ async def nick_all(ctx, *, nickname: str):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='role-spam')
 @commands.has_permissions(administrator=True)
 async def role_spam(ctx, role_name: str, count: int):
@@ -832,6 +1018,485 @@ async def role_spam(ctx, role_name: str, count: int):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
+@bot.command(name='webhook-nuke')
+@commands.has_permissions(administrator=True)
+async def webhook_nuke(ctx):
+    """Delete all webhooks in the server"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.RED}{Style.BRIGHT}[WEBHOOK-NUKE] {Fore.WHITE}Deleting all webhooks in {guild.name} by {author.display_name}{Style.RESET_ALL}')
+
+        # Send initial DM
+        try:
+            await author.send("Starting webhook-nuke operation... Deleting all webhooks.")
+        except:
+            pass
+
+        deleted_count = 0
+        failed_count = 0
+
+        # Get all webhooks from all channels
+        for channel in guild.text_channels:
+            try:
+                webhooks = await channel.webhooks()
+                for webhook in webhooks:
+                    try:
+                        await webhook.delete(reason=f"Webhook-nuke by {author}")
+                        deleted_count += 1
+                    except:
+                        failed_count += 1
+            except:
+                pass
+
+        # Send completion DM
+        print(f'{Fore.RED}{Style.BRIGHT}[WEBHOOK-NUKE] {Fore.WHITE}Complete: {deleted_count} webhooks deleted, {failed_count} failed{Style.RESET_ALL}')
+        try:
+            embed = discord.Embed(
+                description=f"Webhook-nuke complete: {deleted_count} webhooks deleted",
+                color=discord.Color.red()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to manage webhooks!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@is_authorized()
+@bot.command(name='server-banner')
+@commands.has_permissions(administrator=True)
+async def server_banner(ctx, image_url: str):
+    """Change the server banner (requires boost level 2+)"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        # Check if server has banner feature
+        if "BANNER" not in ctx.guild.features:
+            await send_dm(ctx, "This server doesn't have access to banners! (Requires boost level 2)")
+            return
+
+        # Download the image
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.get(image_url) as resp:
+                if resp.status != 200:
+                    await send_dm(ctx, "Failed to download image from URL!")
+                    return
+                image_data = await resp.read()
+
+        # Change server banner
+        await ctx.guild.edit(banner=image_data, reason=f"Server banner changed by {ctx.author}")
+
+        print(f'{Fore.MAGENTA}[SERVER-BANNER] {Fore.WHITE}Server banner changed by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
+
+        # Send confirmation
+        embed = discord.Embed(
+            description="Server banner updated successfully",
+            color=discord.Color.blue()
+        )
+        await send_dm(ctx, embed=embed)
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to change the server banner!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@is_authorized()
+@bot.command(name='strip')
+@commands.has_permissions(administrator=True)
+async def strip(ctx, member: discord.Member):
+    """Remove all roles from a user"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        if member == ctx.author:
+            await send_dm(ctx, "You cannot strip your own roles!")
+            return
+
+        if member.top_role >= ctx.guild.me.top_role:
+            await send_dm(ctx, f"I cannot strip roles from {member.mention} - they have a higher or equal role than me!")
+            return
+
+        # Get all removable roles
+        roles_to_remove = [role for role in member.roles if role != ctx.guild.default_role and not role.managed]
+        role_count = len(roles_to_remove)
+
+        if role_count == 0:
+            await send_dm(ctx, f"{member.mention} has no removable roles!")
+            return
+
+        # Remove all roles
+        await member.remove_roles(*roles_to_remove, reason=f"Stripped by {ctx.author}")
+
+        print(f'{Fore.YELLOW}[STRIP] {Fore.WHITE}Stripped {role_count} roles from {member.display_name} by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
+
+        # Send confirmation
+        embed = discord.Embed(
+            description=f"Stripped {role_count} roles from {member.mention}",
+            color=discord.Color.orange()
+        )
+        await send_dm(ctx, embed=embed)
+
+    except discord.Forbidden:
+        await send_dm(ctx, f"I don't have permission to remove roles from {member.mention}!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@is_authorized()
+@bot.command(name='emoji-nuke')
+@commands.has_permissions(administrator=True)
+async def emoji_nuke(ctx):
+    """Delete all custom emojis"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.RED}{Style.BRIGHT}[EMOJI-NUKE] {Fore.WHITE}Deleting all emojis in {guild.name} by {author.display_name}{Style.RESET_ALL}')
+
+        # Send initial DM
+        try:
+            await author.send("Starting emoji-nuke operation... Deleting all custom emojis.")
+        except:
+            pass
+
+        deleted_count = 0
+        failed_count = 0
+
+        # Get all emojis
+        emojis = list(guild.emojis)
+
+        for emoji in emojis:
+            try:
+                await emoji.delete(reason=f"Emoji-nuke by {author}")
+                deleted_count += 1
+            except Exception as e:
+                failed_count += 1
+
+        # Send completion DM
+        print(f'{Fore.RED}{Style.BRIGHT}[EMOJI-NUKE] {Fore.WHITE}Complete: {deleted_count} emojis deleted, {failed_count} failed{Style.RESET_ALL}')
+        try:
+            embed = discord.Embed(
+                description=f"Emoji-nuke complete: {deleted_count} emojis deleted",
+                color=discord.Color.red()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to manage emojis!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@is_authorized()
+@bot.command(name='shuffle-channels')
+@commands.has_permissions(administrator=True)
+async def shuffle_channels(ctx):
+    """Randomly reorder all channels"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.CYAN}{Style.BRIGHT}[SHUFFLE-CHANNELS] {Fore.WHITE}Shuffling all channels in {guild.name} by {author.display_name}{Style.RESET_ALL}')
+
+        # Send initial DM
+        try:
+            await author.send("Starting shuffle-channels operation... Randomly reordering all channels.")
+        except:
+            pass
+
+        import random
+
+        # Shuffle channels within each category
+        modified_count = 0
+
+        for category in guild.categories:
+            channels = category.channels
+            if len(channels) > 0:
+                positions = list(range(len(channels)))
+                random.shuffle(positions)
+
+                for i, channel in enumerate(channels):
+                    try:
+                        await channel.edit(position=positions[i])
+                        modified_count += 1
+                    except:
+                        pass
+
+        # Shuffle channels without category
+        no_category_channels = [ch for ch in guild.channels if ch.category is None and not isinstance(ch, discord.CategoryChannel)]
+        if len(no_category_channels) > 0:
+            positions = list(range(len(no_category_channels)))
+            random.shuffle(positions)
+
+            for i, channel in enumerate(no_category_channels):
+                try:
+                    await channel.edit(position=positions[i])
+                    modified_count += 1
+                except:
+                    pass
+
+        # Send completion DM
+        print(f'{Fore.CYAN}{Style.BRIGHT}[SHUFFLE-CHANNELS] {Fore.WHITE}Complete: {modified_count} channels shuffled{Style.RESET_ALL}')
+        try:
+            embed = discord.Embed(
+                description=f"Shuffle-channels complete: {modified_count} channels reordered",
+                color=discord.Color.blue()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to manage channels!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@is_authorized()
+@bot.command(name='voice-scatter')
+@commands.has_permissions(move_members=True)
+async def voice_scatter(ctx):
+    """Scatter users randomly across voice channels"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.CYAN}{Style.BRIGHT}[VOICE-SCATTER] {Fore.WHITE}Scattering voice users in {guild.name} by {author.display_name}{Style.RESET_ALL}')
+
+        # Get all voice channels
+        voice_channels = guild.voice_channels
+
+        if len(voice_channels) < 2:
+            await send_dm(ctx, "Need at least 2 voice channels to scatter users!")
+            return
+
+        # Get all members in voice
+        members_in_voice = []
+        for channel in voice_channels:
+            members_in_voice.extend(channel.members)
+
+        if len(members_in_voice) == 0:
+            await send_dm(ctx, "No users in voice channels!")
+            return
+
+        # Send initial DM
+        try:
+            await author.send(f"Starting voice-scatter operation... Scattering {len(members_in_voice)} users across {len(voice_channels)} channels.")
+        except:
+            pass
+
+        import random
+        moved_count = 0
+        failed_count = 0
+
+        for member in members_in_voice:
+            try:
+                target_channel = random.choice(voice_channels)
+                if member.voice and member.voice.channel != target_channel:
+                    await member.move_to(target_channel, reason=f"Voice-scatter by {author}")
+                    moved_count += 1
+            except Exception as e:
+                failed_count += 1
+
+        # Send completion DM
+        print(f'{Fore.CYAN}{Style.BRIGHT}[VOICE-SCATTER] {Fore.WHITE}Complete: {moved_count} users scattered, {failed_count} failed{Style.RESET_ALL}')
+        try:
+            embed = discord.Embed(
+                description=f"Voice-scatter complete: {moved_count} users moved",
+                color=discord.Color.green()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to move members!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@is_authorized()
+@bot.command(name='mention-spam')
+@commands.has_permissions(mention_everyone=True)
+async def mention_spam(ctx, target: str, count: int):
+    """Spam mentions of a user or role"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        if count <= 0:
+            await send_dm(ctx, "Please specify a positive number!")
+            return
+
+        if count > 100:
+            await send_dm(ctx, "Maximum 100 mentions at a time!")
+            return
+
+        author = ctx.author
+
+        print(f'{Fore.YELLOW}{Style.BRIGHT}[MENTION-SPAM] {Fore.WHITE}Spamming {count} mentions of {target} by {author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
+
+        # Send initial DM
+        try:
+            await author.send(f"Starting mention-spam operation... Sending {count} mentions.")
+        except:
+            pass
+
+        sent_count = 0
+
+        for _ in range(count):
+            try:
+                msg = await ctx.send(target)
+                # Delete immediately for ghost ping effect
+                await msg.delete()
+                sent_count += 1
+            except:
+                pass
+
+        # Send completion DM
+        print(f'{Fore.YELLOW}{Style.BRIGHT}[MENTION-SPAM] {Fore.WHITE}Complete: {sent_count} mentions sent{Style.RESET_ALL}')
+        try:
+            embed = discord.Embed(
+                description=f"Mention-spam complete: {sent_count} mentions sent",
+                color=discord.Color.gold()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to send messages or mention!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@is_authorized()
+@bot.command(name='server-desc')
+@commands.has_permissions(administrator=True)
+async def server_desc(ctx, *, description: str):
+    """Change the server description"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        # Change server description
+        await ctx.guild.edit(description=description, reason=f"Server description changed by {ctx.author}")
+
+        print(f'{Fore.MAGENTA}[SERVER-DESC] {Fore.WHITE}Server description changed by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
+
+        # Send confirmation
+        embed = discord.Embed(
+            description="Server description updated successfully",
+            color=discord.Color.blue()
+        )
+        await send_dm(ctx, embed=embed)
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to change the server description!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@is_authorized()
+@bot.command(name='move-all')
+@commands.has_permissions(move_members=True)
+async def move_all(ctx, channel: discord.VoiceChannel):
+    """Move all users to a specific voice channel"""
+    try:
+        # Delete command message
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.CYAN}{Style.BRIGHT}[MOVE-ALL] {Fore.WHITE}Moving all voice users to {channel.name} by {author.display_name} in {guild.name}{Style.RESET_ALL}')
+
+        # Get all members in voice
+        members_in_voice = []
+        for vc in guild.voice_channels:
+            members_in_voice.extend(vc.members)
+
+        if len(members_in_voice) == 0:
+            await send_dm(ctx, "No users in voice channels!")
+            return
+
+        # Send initial DM
+        try:
+            await author.send(f"Starting move-all operation... Moving {len(members_in_voice)} users to {channel.name}.")
+        except:
+            pass
+
+        moved_count = 0
+        failed_count = 0
+
+        for member in members_in_voice:
+            if member.voice and member.voice.channel != channel:
+                try:
+                    await member.move_to(channel, reason=f"Move-all by {author}")
+                    moved_count += 1
+                except Exception as e:
+                    failed_count += 1
+
+        # Send completion DM
+        print(f'{Fore.CYAN}{Style.BRIGHT}[MOVE-ALL] {Fore.WHITE}Complete: {moved_count} users moved, {failed_count} failed{Style.RESET_ALL}')
+        try:
+            embed = discord.Embed(
+                description=f"Move-all complete: {moved_count} users moved to {channel.mention}",
+                color=discord.Color.green()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, "I don't have permission to move members!")
+    except Exception as e:
+        await send_dm(ctx, f"An error occurred: {str(e)}")
+
+@is_authorized()
 @bot.command(name='ban-all')
 @commands.has_permissions(ban_members=True)
 async def ban_all(ctx, *, reason: str = "BYE BYE"):
@@ -901,6 +1566,7 @@ async def ban_all(ctx, *, reason: str = "BYE BYE"):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='kick-all')
 @commands.has_permissions(kick_members=True)
 async def kick_all(ctx, *, reason: str = "BYE BYE"):
@@ -970,6 +1636,7 @@ async def kick_all(ctx, *, reason: str = "BYE BYE"):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='mute-all')
 @commands.has_permissions(moderate_members=True)
 async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
@@ -1053,6 +1720,7 @@ async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='death')
 @commands.has_permissions(administrator=True)
 async def death(ctx):
@@ -1152,6 +1820,7 @@ async def death(ctx):
         except:
             pass
 
+@is_authorized()
 @bot.command(name='brainfuck')
 @commands.has_permissions(administrator=True)
 async def brainfuck(ctx, channel_name: str, *, spam_message: str):
@@ -1245,6 +1914,7 @@ async def brainfuck(ctx, channel_name: str, *, spam_message: str):
         except:
             pass
 
+@is_authorized()
 @bot.command(name='spam')
 @commands.has_permissions(manage_messages=True)
 async def spam(ctx, count: int, *, message: str):
@@ -1318,6 +1988,7 @@ async def spam(ctx, count: int, *, message: str):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='dmall')
 async def dmall(ctx, *, message: str):
     """DM all users in the server"""
@@ -1381,6 +2052,7 @@ async def dmall(ctx, *, message: str):
         except:
             pass
 
+@is_authorized()
 @bot.command(name='dm')
 async def dm(ctx, user: discord.Member, *, message: str):
     """DM a user"""
@@ -1412,6 +2084,7 @@ async def dm(ctx, user: discord.Member, *, message: str):
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='serverinfo')
 async def serverinfo(ctx):
     """Get detailed server information"""
@@ -1461,6 +2134,7 @@ Created: {guild.created_at.strftime("%Y-%m-%d")}"""
     except Exception as e:
         await send_dm(ctx, f"An error occurred: {str(e)}")
 
+@is_authorized()
 @bot.command(name='shutdown')
 @commands.has_permissions(administrator=True)
 async def shutdown(ctx):
@@ -1503,8 +2177,8 @@ if __name__ == "__main__":
     token = config.get("token")
     if not token:
         print(f'{Fore.RED}Error: Token not found in config.json!{Style.RESET_ALL}')
-        print('Please add your bot token to config.json')
-        print('Example: {"token": "BOT_TOKEN", "prefix": ".!"}')
+        print('Please add your bot token and owner ID to config.json')
+        print('Example: {"token": "BOT_TOKEN", "prefix": ".!", "owner_id": "YOUR_USER_ID", "whitelist": []}')
     else:
         print(f'{Fore.CYAN}[CONFIG] Bot token loaded from config.json{Style.RESET_ALL}')
         bot.run(token)
