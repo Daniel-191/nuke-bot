@@ -3,11 +3,45 @@ from discord.ext import commands
 import os
 import json
 import asyncio
-from datetime import timedelta
+from datetime import timedelta, datetime
 from colorama import Fore, Back, Style, init
+import logging
 
 # Initialize colorama
 init(autoreset=True)
+
+# Setup logging
+def setup_logging():
+    """Setup logging to file and console"""
+    # Create logs directory if it doesn't exist
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+
+    # Create log filename with current date
+    log_filename = f'logs/bot_{datetime.now().strftime("%Y-%m-%d")}.log'
+
+    # Create logger
+    logger = logging.getLogger('NukeBot')
+    logger.setLevel(logging.INFO)
+
+    # Create file handler with user-friendly formatting
+    file_handler = logging.FileHandler(log_filename, encoding='utf-8')
+    file_handler.setLevel(logging.INFO)
+
+    # Create formatter
+    formatter = logging.Formatter(
+        '%(asctime)s | %(levelname)-8s | %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    file_handler.setFormatter(formatter)
+
+    # Add handler to logger
+    logger.addHandler(file_handler)
+
+    return logger
+
+# Initialize logger
+logger = setup_logging()
 
 # Load configuration
 def load_config():
@@ -45,6 +79,41 @@ async def on_ready():
     print(f'{Fore.GREEN}[READY] {bot.user} is now online!')
     print(f'{Fore.GREEN}[READY] Bot ID: {bot.user.id}{Style.RESET_ALL}')
 
+    # Log bot startup
+    guild_list = ', '.join([f"{guild.name} (ID: {guild.id})" for guild in bot.guilds])
+    logger.info(f"BOT STARTED - {bot.user} (ID: {bot.user.id}) | Connected to {len(bot.guilds)} guild(s): {guild_list}")
+    logger.info(f"Bot prefix: {config.get('prefix', '.!')} | Owner ID: {config.get('owner_id', 'Not set')}")
+
+@bot.event
+async def on_command(ctx):
+    """Log all command executions"""
+    # Get command arguments if any
+    args = ctx.message.content.split()[1:] if len(ctx.message.content.split()) > 1 else []
+    args_str = ' '.join(args) if args else '(no args)'
+
+    # Log the command execution
+    logger.info(f"COMMAND EXECUTED - User: {ctx.author} (ID: {ctx.author.id}) | Command: {ctx.command.name} {args_str} | Guild: {ctx.guild.name} (ID: {ctx.guild.id}) | Channel: #{ctx.channel.name}")
+
+@bot.event
+async def on_command_error(ctx, error):
+    """Log command errors"""
+    # Don't log CheckFailure errors (these are from is_authorized failures, already logged)
+    if isinstance(error, commands.CheckFailure):
+        return
+
+    # Log other errors
+    logger.error(f"COMMAND ERROR - User: {ctx.author} (ID: {ctx.author.id}) | Command: {ctx.command.name if ctx.command else 'Unknown'} | Guild: {ctx.guild.name if ctx.guild else 'DM'} | Error: {str(error)}")
+
+@bot.event
+async def on_guild_join(guild):
+    """Log when bot joins a new guild"""
+    logger.info(f"BOT JOINED GUILD - Guild: {guild.name} (ID: {guild.id}) | Members: {guild.member_count} | Owner: {guild.owner} (ID: {guild.owner.id})")
+
+@bot.event
+async def on_guild_remove(guild):
+    """Log when bot leaves/is removed from a guild"""
+    logger.info(f"BOT LEFT GUILD - Guild: {guild.name} (ID: {guild.id})")
+
 # Authorization check function
 def is_authorized():
     """Check if user is bot owner or in whitelist"""
@@ -62,6 +131,7 @@ def is_authorized():
 
         # User is not authorized
         print(f'{Fore.RED}[UNAUTHORIZED] {Fore.WHITE}{ctx.author.display_name} (ID: {ctx.author.id}) attempted to use {ctx.command.name} in {ctx.guild.name}{Style.RESET_ALL}')
+        logger.warning(f"UNAUTHORIZED ACCESS - User: {ctx.author} (ID: {ctx.author.id}) | Command: {ctx.command.name} | Guild: {ctx.guild.name} (ID: {ctx.guild.id})")
 
         # Delete command message
         try:
@@ -2141,6 +2211,7 @@ async def shutdown(ctx):
     """Shutdown the bot"""
     try:
         print(f'{Back.RED}{Fore.WHITE}{Style.BRIGHT}[SHUTDOWN] Bot shutdown initiated by {ctx.author.display_name}{Style.RESET_ALL}')
+        logger.warning(f"BOT SHUTDOWN - Initiated by: {ctx.author} (ID: {ctx.author.id}) | Guild: {ctx.guild.name} (ID: {ctx.guild.id})")
 
         # Delete command message
         try:
@@ -2165,6 +2236,7 @@ async def shutdown(ctx):
             pass
 
         print(f'{Back.RED}{Fore.WHITE}[SHUTDOWN] Bot is now shutting down...{Style.RESET_ALL}')
+        logger.info("BOT SHUTDOWN COMPLETE")
 
         # Close the bot
         await bot.close()

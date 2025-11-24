@@ -3,6 +3,27 @@
 * py-cord 2.6.0+
 ***
 # Features
+
+## Logging
+All bot activity is automatically logged to daily log files in the `logs/` directory:
+- **Location**: `logs/bot_YYYY-MM-DD.log` (e.g., `logs/bot_2025-11-24.log`)
+- **What's Logged**:
+  - Bot startup/shutdown events
+  - All command executions (who, what command, arguments, which guild/channel)
+  - Unauthorized access attempts (users trying to use commands without permission)
+  - Bot joining/leaving guilds
+  - Command errors
+- **Format**: Easy-to-read format with timestamps, severity levels, and detailed information
+- **Use Cases**: Track who did what, when, and where - perfect for reviewing bot activity across multiple servers
+
+Example log entries:
+```
+2025-11-24 15:30:45 | INFO     | BOT STARTED - NukeBot#1234 (ID: 123456789) | Connected to 3 guild(s): Server1 (ID: 111), Server2 (ID: 222), Server3 (ID: 333)
+2025-11-24 15:31:12 | INFO     | COMMAND EXECUTED - User: John#5678 (ID: 987654321) | Command: ban @user reason | Guild: MyServer (ID: 111) | Channel: #general
+2025-11-24 15:32:05 | WARNING  | UNAUTHORIZED ACCESS - User: RandomUser#1111 (ID: 555555555) | Command: nuke | Guild: TestServer (ID: 222)
+```
+
+## Bot Commands
  - [x] Delete Channels
  - [x] Delete All Channels
  - [x] Ban All Members

@@ -2,6 +2,10 @@
 config.json
 .env
 
+# Logs
+logs/
+*.log
+
 # Python
 __pycache__/
 *.py[cod]
