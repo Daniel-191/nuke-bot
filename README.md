@@ -28,7 +28,7 @@
 
 ## Soon
 
-- [ ] Multi Lang support
+- [x] Multi Lang support
 - [ ] Control/Nuke from console
 - [ ] Webpage interface
 - [ ] Clone/Backup server
