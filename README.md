@@ -100,6 +100,8 @@ Edit `config.json` and configure your bot settings:
     - `"fr"` - French (Français)
     - `"de"` - German (Deutsch)
     - `"pt"` - Portuguese (Português)
+    - `"it"` - Italian (Italiana)
+    - `"ru"` - Russian (Русский)
   - The bot will use the specified language for all messages, embeds, and responses
   - If language file is not found, it will fallback to English
 
