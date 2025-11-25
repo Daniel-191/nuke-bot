@@ -141,5 +141,5 @@ cd nuke-bot
 ```
 
 ***
-# Warning
-⚠️ This bot contains highly destructive commands. Use responsibly and only in servers where you have explicit permission. The developers are not responsible for any misuse.
+> [!WARNING]  
+> ⚠️ This bot contains highly destructive commands. Use responsibly and only in servers where you have explicit permission. The developers are not responsible for any misuse.
