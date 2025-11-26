@@ -49,7 +49,7 @@ logger = setup_logging()
 # Translation system
 translations = {}
 
-def load_translations(language="en"):
+def load_translations(language="en"): # default to english
     """Load translation file based on language setting"""
     global translations
     lang_file = f'lang/{language}.json'
