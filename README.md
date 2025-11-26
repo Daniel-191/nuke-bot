@@ -45,7 +45,7 @@ For a complete list of all available commands with detailed descriptions and usa
 
 ## Windows
 
-### Easy Method (Using Batch Files):
+### Easy Method: (Windows)
 1. Clone the repository:
 ```console
 git clone https://github.com/Daniel-191/nuke-bot
@@ -53,16 +53,16 @@ cd nuke-bot
 ```
 2. Run the installer:
    - Double-click **`install.bat`** to install dependencies
-   - OR double-click **`start.bat`** for automatic install + run
 
 3. Configure `config.json` with your bot token and user ID
 4. Run **`run.bat`** to start the bot
 
-### Manual Method:
+### Manual Method: (Windows)
 ```console
 git clone https://github.com/Daniel-191/nuke-bot
 cd nuke-bot
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
+python main.py
 ```
 
 ## Linux / Mac
@@ -70,7 +70,8 @@ python -m pip install -r requirements.txt
 ```console
 git clone https://github.com/Daniel-191/nuke-bot
 cd nuke-bot
-python3 -m pip install -r requirements.txt
+pip install -r requirements.txt
+python3 main.py
 ```
 
 ## Android (Termux)
@@ -80,7 +81,8 @@ apt update && apt upgrade
 pkg install python git
 git clone https://github.com/Daniel-191/nuke-bot
 cd nuke-bot
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
+python3 main.py
 ```
 
 ***
