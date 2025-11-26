@@ -41,9 +41,11 @@
 For a complete list of all available commands with detailed descriptions and usage examples, see **[COMMANDS.md](COMMANDS.md)**
 
 ***
-# Installation:
-## Windows (Easy Method)
-**Using Batch Files:**
+# Installation
+
+## Windows
+
+### Easy Method (Using Batch Files):
 1. Clone the repository:
 ```console
 git clone https://github.com/Daniel-191/nuke-bot
@@ -56,14 +58,23 @@ cd nuke-bot
 3. Configure `config.json` with your bot token and user ID
 4. Run **`run.bat`** to start the bot
 
-## Windows / Linux (Manual Method)
+### Manual Method:
 ```console
 git clone https://github.com/Daniel-191/nuke-bot
 cd nuke-bot
 python -m pip install -r requirements.txt
 ```
 
-## Android (Termux):
+## Linux / Mac
+
+```console
+git clone https://github.com/Daniel-191/nuke-bot
+cd nuke-bot
+python3 -m pip install -r requirements.txt
+```
+
+## Android (Termux)
+
 ```console
 apt update && apt upgrade
 pkg install python git
@@ -109,43 +120,6 @@ Edit `config.json` and configure your bot settings:
     - `"el"` - Greek (Ελληνικά)
   - The bot will use the specified language for all messages, embeds, and responses
   - If language file is not found, it will fallback to English
-
-## 🔐 Security & Authorization
-**IMPORTANT:** All bot commands are restricted to authorized users only!
-- Only the **bot owner** (specified in `owner_id`) can use commands by default
-- Additional users can be whitelisted by adding their Discord user IDs to the `whitelist` array
-- Unauthorized users will receive an error message if they try to use any command
-- Get your Discord user ID: Enable Developer Mode in Discord settings, then right-click your username and select "Copy ID"
-
-## Getting a Bot Token
-1. Go to https://discord.com/developers/applications
-2. Create a new application
-3. Go to the "Bot" section and create a bot
-4. Copy the token and replace `BOT_TOKEN` in `config.json`
-5. Enable these intents in Bot settings:
-   - Message Content Intent
-   - Server Members Intent
-6. Invite bot with Administrator permissions
-
-***
-# Running
-
-## Windows:
-- **Easy:** Double-click `run.bat`
-- **Manual:** `python main.py`
-
-## Linux/Mac:
-```console
-python3 main.py
-```
-
-**[Subsequent launches]**
-```console
-cd nuke-bot
-
-# Windows: run.bat
-# Linux/Mac: python3 main.py
-```
 
 ***
 > [!WARNING]  
