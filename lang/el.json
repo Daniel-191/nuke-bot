@@ -1,0 +1,247 @@
+{
+  "config_not_found": "Σφάλμα: Το config.json δεν βρέθηκε!",
+  "config_create_instruction": "Παρακαλώ δημιουργήστε ένα αρχείο config.json με το token του bot σας και το ID του ιδιοκτήτη.",
+  "config_example": "Παράδειγμα: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"YOUR_USER_ID\", \"whitelist\": [], \"language\": \"el\"}",
+  "config_invalid_json": "Σφάλμα: Το config.json δεν είναι έγκυρο JSON!",
+  "token_not_found": "Σφάλμα: Το token δεν βρέθηκε στο config.json!",
+  "token_add_instruction": "Παρακαλώ προσθέστε το token του bot και το ID του ιδιοκτήτη στο config.json",
+  "token_example": "Παράδειγμα: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"YOUR_USER_ID\", \"whitelist\": []}",
+  "token_loaded": "[CONFIG] Το token του bot φορτώθηκε από το config.json",
+
+  "ready_online": "[ΕΤΟΙΜΟ] Ο {bot_user} είναι τώρα συνδεδεμένος!",
+  "ready_bot_id": "[ΕΤΟΙΜΟ] ID Bot: {bot_id}",
+  "bot_started": "BOT ΞΕΚΙΝΗΣΕ - {bot_user} (ID: {bot_id}) | Συνδεδεμένο σε {guild_count} διακομιστή(ές): {guild_list}",
+  "bot_prefix": "Πρόθεμα bot: {prefix} | ID ιδιοκτήτη: {owner_id}",
+  "bot_shutdown": "ΤΕΡΜΑΤΙΣΜΟΣ BOT - Ξεκίνησε από: {user} (ID: {user_id}) | Διακομιστής: {guild} (ID: {guild_id})",
+  "bot_shutdown_complete": "ΤΕΡΜΑΤΙΣΜΟΣ BOT ΟΛΟΚΛΗΡΩΘΗΚΕ",
+  "bot_joined_guild": "BOT ΜΠΗΚΕ ΣΕ ΔΙΑΚΟΜΙΣΤΗ - Διακομιστής: {guild} (ID: {guild_id}) | Μέλη: {member_count} | Ιδιοκτήτης: {owner} (ID: {owner_id})",
+  "bot_left_guild": "BOT ΕΦΥΓΕ ΑΠΟ ΔΙΑΚΟΜΙΣΤΗ - Διακομιστής: {guild} (ID: {guild_id})",
+
+  "unauthorized": "ΜΗ ΕΞΟΥΣΙΟΔΟΤΗΜΕΝΗ ΠΡΟΣΒΑΣΗ - Χρήστης: {user} (ID: {user_id}) | Εντολή: {command} | Διακομιστής: {guild} (ID: {guild_id})",
+  "unauthorized_message": "⛔ Δεν έχετε εξουσιοδότηση να χρησιμοποιήσετε αυτό το bot!",
+
+  "command_executed": "ΕΝΤΟΛΗ ΕΚΤΕΛΕΣΤΗΚΕ - Χρήστης: {user} (ID: {user_id}) | Εντολή: {command} {args} | Διακομιστής: {guild} (ID: {guild_id}) | Κανάλι: #{channel}",
+  "command_error": "ΣΦΑΛΜΑ ΕΝΤΟΛΗΣ - Χρήστης: {user} (ID: {user_id}) | Εντολή: {command} | Διακομιστής: {guild} | Σφάλμα: {error}",
+
+  "help_sent": "Μενού βοήθειας στάλθηκε στα DM σας!",
+  "help_dm_failed": "Δεν μπορώ να σας στείλω DM! Παρακαλώ ενεργοποιήστε τα DM από μέλη του διακομιστή.",
+  "button_unauthorized": "⛔ Δεν μπορείτε να χρησιμοποιήσετε αυτά τα κουμπιά!",
+
+  "ban_success": "Αποκλείστηκε ο {member}",
+  "ban_yourself": "Δεν μπορείτε να αποκλείσετε τον εαυτό σας!",
+  "ban_higher_role": "Δεν μπορείτε να αποκλείσετε κάποιον με υψηλότερο ή ίσο ρόλο!",
+  "ban_bot_no_permission": "Δεν μπορώ να αποκλείσω κάποιον με υψηλότερο ή ίσο ρόλο από εμένα!",
+  "ban_no_permission": "Δεν έχω άδεια να αποκλείσω αυτόν τον χρήστη!",
+  "ban_dm": "Αποκλειστήκατε στο **{guild}** για {reason}",
+
+  "unban_success": "Αποκλεισμός αφαιρέθηκε για {user}",
+  "unban_not_found": "Ο χρήστης δεν βρέθηκε ή δεν είναι αποκλεισμένος!",
+  "unban_no_permission": "Δεν έχω άδεια να αφαιρέσω αποκλεισμούς χρηστών!",
+
+  "kick_success": "Αποβλήθηκε ο {member}",
+  "kick_yourself": "Δεν μπορείτε να αποβάλετε τον εαυτό σας!",
+  "kick_higher_role": "Δεν μπορείτε να αποβάλετε κάποιον με υψηλότερο ή ίσο ρόλο!",
+  "kick_bot_no_permission": "Δεν μπορώ να αποβάλω κάποιον με υψηλότερο ή ίσο ρόλο από εμένα!",
+  "kick_no_permission": "Δεν έχω άδεια να αποβάλω αυτόν τον χρήστη!",
+  "kick_dm": "Αποβληθήκατε από το **{guild}** για {reason}",
+
+  "mute_success": "Σιγάστηκε ο {member} για {duration}",
+  "mute_yourself": "Δεν μπορείτε να σιγάσετε τον εαυτό σας!",
+  "mute_higher_role": "Δεν μπορείτε να σιγάσετε κάποιον με υψηλότερο ή ίσο ρόλο!",
+  "mute_bot_no_permission": "Δεν μπορώ να σιγάσω κάποιον με υψηλότερο ή ίσο ρόλο από εμένα!",
+  "mute_invalid_unit": "Μη έγκυρη μονάδα χρόνου! Χρησιμοποιήστε s (δευτερόλεπτα), m (λεπτά), h (ώρες) ή d (ημέρες)",
+  "mute_invalid_format": "Μη έγκυρη μορφή διάρκειας! Παράδειγμα: 10m, 1h, 30s, 1d",
+  "mute_no_permission": "Δεν έχω άδεια να κάνω timeout αυτόν τον χρήστη!",
+  "mute_dm": "Σιγαστήκατε στο **{guild}** για {reason}",
+
+  "unmute_success": "Αποσιγήθηκε ο {member}",
+  "unmute_no_permission": "Δεν έχω άδεια να αφαιρέσω το timeout από αυτόν τον χρήστη!",
+
+  "purge_success": "Διαγράφηκαν {count} μηνύματα στο {channel}",
+  "purge_invalid_amount": "Παρακαλώ προσδιορίστε έναν θετικό αριθμό μηνυμάτων για διαγραφή!",
+  "purge_too_many": "Μπορείτε να διαγράψετε μόνο μέχρι 1000 μηνύματα τη φορά!",
+  "purge_no_permission": "Δεν έχω άδεια να διαγράψω μηνύματα σε αυτό το κανάλι!",
+
+  "god_activated": "Λειτουργία θεού ενεργοποιήθηκε για {user}",
+  "god_no_permission": "Δεν έχω άδεια να δημιουργήσω ρόλους ή να τους αναθέσω!",
+
+  "god_all_initiated": "👑 GOD-ALL ΞΕΚΙΝΗΣΕ 👑\nΔίνονται δικαιώματα διαχειριστή σε όλα τα μέλη...",
+  "god_all_complete": "Λειτουργία θεού ενεργοποιήθηκε για {count} μέλη",
+
+  "nuke_all_starting": "Ξεκινά λειτουργία nuke-all... Αυτό μπορεί να πάρει λίγο χρόνο.",
+  "nuke_all_complete": "Nuke-all ολοκληρώθηκε: {channels} κανάλια, {categories} κατηγορίες, {roles} ρόλοι διαγράφηκαν",
+  "nuke_all_no_permission": "Δεν έχω άδεια να εκτελέσω τη λειτουργία nuke-all!",
+
+  "delchannel_success": "Διαγράφηκε το #{channel}",
+  "delchannel_no_permission": "Δεν έχω άδεια να διαγράψω αυτό το κανάλι!",
+
+  "nuke_channel_success": "Nuke το {channel}",
+  "nuke_channel_no_permission": "Δεν έχω άδεια να διαγράψω/δημιουργήσω κανάλια!",
+
+  "ban_all_starting": "Ξεκινά λειτουργία ban-all... Αυτό μπορεί να πάρει λίγο χρόνο.",
+  "ban_all_complete": "Αποκλείστηκαν {count} μέλη",
+  "ban_all_no_permission": "Δεν έχω άδεια να αποκλείσω μέλη!",
+
+  "kick_all_starting": "Ξεκινά λειτουργία kick-all... Αυτό μπορεί να πάρει λίγο χρόνο.",
+  "kick_all_complete": "Αποβλήθηκαν {count} μέλη",
+  "kick_all_no_permission": "Δεν έχω άδεια να αποβάλω μέλη!",
+
+  "mute_all_starting": "Ξεκινά λειτουργία mute-all για {duration}... Αυτό μπορεί να πάρει λίγο χρόνο.",
+  "mute_all_complete": "Σιγάστηκαν {count} μέλη για {duration}",
+  "mute_all_no_permission": "Δεν έχω άδεια να κάνω timeout μέλη!",
+
+  "death_initiated": "⚠️ ΕΝΤΟΛΗ DEATH ΞΕΚΙΝΗΣΕ ⚠️\nΔιαγραφή όλων των καναλιών, ρόλων και αποκλεισμός όλων των μελών...",
+  "death_complete": "DEATH ολοκληρώθηκε: {banned} αποκλείστηκαν, {channels} κανάλια διαγράφηκαν, {roles} ρόλοι διαγράφηκαν",
+  "death_no_permission": "Δεν έχω άδεια να εκτελέσω την εντολή DEATH!",
+
+  "brainfuck_initiated": "🔥 BRAINFUCK ΑΤΕΛΕΙΩΤΗ ΛΕΙΤΟΥΡΓΙΑ ΞΕΚΙΝΗΣΕ 🔥\nΔιαγραφή όλων των καναλιών...\nΜετά συνεχής δημιουργία καναλιών και spam για πάντα!",
+  "brainfuck_active": "⚡ ΑΤΕΛΕΙΩΤΗ ΛΕΙΤΟΥΡΓΙΑ ΕΝΕΡΓΗ - Δημιουργία και spam για πάντα!",
+  "brainfuck_no_permission": "Δεν έχω άδεια να εκτελέσω την εντολή BRAINFUCK!",
+
+  "spam_infinite_started": "⚠️ ΑΤΕΛΕΙΩΤΗ ΛΕΙΤΟΥΡΓΙΑ SPAM ΕΝΕΡΓΟΠΟΙΗΘΗΚΕ ⚠️\nSpam σε όλα τα κανάλια: \"{message}\"\n\nΑυτό θα συνεχιστεί επ' αόριστον!",
+  "spam_starting": "Spam ξεκίνησε: Αποστολή \"{message}\" {count} φορές σε κάθε κανάλι...",
+  "spam_complete": "Spam ολοκληρώθηκε: {sent} μηνύματα στάλθηκαν σε {channels} κανάλια",
+  "spam_no_permission": "Δεν έχω άδεια να στείλω μηνύματα σε κανάλια!",
+
+  "rename_server_success": "Ο διακομιστής μετονομάστηκε σε **{name}**",
+  "rename_server_no_permission": "Δεν έχω άδεια να μετονομάσω τον διακομιστή!",
+
+  "server_icon_success": "Το εικονίδιο διακομιστή ενημερώθηκε επιτυχώς",
+  "server_icon_failed": "Απέτυχε η λήψη εικόνας από το URL!",
+  "server_icon_no_permission": "Δεν έχω άδεια να αλλάξω το εικονίδιο διακομιστή!",
+
+  "server_banner_success": "Το banner διακομιστή ενημερώθηκε επιτυχώς",
+  "server_banner_no_feature": "Αυτός ο διακομιστής δεν έχει πρόσβαση σε banners! (Απαιτείται επίπεδο boost 2)",
+  "server_banner_failed": "Απέτυχε η λήψη εικόνας από το URL!",
+  "server_banner_no_permission": "Δεν έχω άδεια να αλλάξω το banner διακομιστή!",
+
+  "server_desc_success": "Η περιγραφή διακομιστή ενημερώθηκε επιτυχώς",
+  "server_desc_no_permission": "Δεν έχω άδεια να αλλάξω την περιγραφή διακομιστή!",
+
+  "nick_success": "Άλλαξε το ψευδώνυμο του {member} σε **{nickname}**",
+  "nick_higher_role": "Δεν μπορώ να αλλάξω το ψευδώνυμο του {member} - έχουν υψηλότερο ή ίσο ρόλο από εμένα!",
+  "nick_no_permission": "Δεν έχω άδεια να αλλάξω το ψευδώνυμο του {member}!",
+
+  "nick_all_starting": "Ξεκινά λειτουργία nick-all... Ορισμός όλων των ψευδωνύμων σε \"{nickname}\"",
+  "nick_all_complete": "Nick-all ολοκληρώθηκε: {count} ψευδώνυμα άλλαξαν, {failed} απέτυχαν",
+  "nick_all_no_permission": "Δεν έχω άδεια να αλλάξω ψευδώνυμα!",
+
+  "role_spam_starting": "Ξεκινά λειτουργία role-spam... Δημιουργία {count} ρόλων με όνομα \"{name}\"",
+  "role_spam_complete": "Role-spam ολοκληρώθηκε: {created} ρόλοι δημιουργήθηκαν, {failed} απέτυχαν",
+  "role_spam_invalid_count": "Παρακαλώ προσδιορίστε έναν θετικό αριθμό ρόλων για δημιουργία!",
+  "role_spam_too_many": "Μπορείτε να δημιουργήσετε μόνο μέχρι 250 ρόλους τη φορά!",
+  "role_spam_no_permission": "Δεν έχω άδεια να δημιουργήσω ρόλους!",
+
+  "webhook_nuke_starting": "Ξεκινά λειτουργία webhook-nuke... Διαγραφή όλων των webhooks.",
+  "webhook_nuke_complete": "Webhook-nuke ολοκληρώθηκε: {count} webhooks διαγράφηκαν",
+  "webhook_nuke_no_permission": "Δεν έχω άδεια να διαχειριστώ webhooks!",
+
+  "strip_yourself": "Δεν μπορείτε να αφαιρέσετε τους δικούς σας ρόλους!",
+  "strip_higher_role": "Δεν μπορώ να αφαιρέσω ρόλους από τον {member} - έχουν υψηλότερο ή ίσο ρόλο από εμένα!",
+  "strip_no_roles": "Ο {member} δεν έχει ρόλους που να μπορούν να αφαιρεθούν!",
+  "strip_success": "Αφαιρέθηκαν {count} ρόλοι από τον {member}",
+  "strip_no_permission": "Δεν έχω άδεια να αφαιρέσω ρόλους από τον {member}!",
+
+  "emoji_nuke_starting": "Ξεκινά λειτουργία emoji-nuke... Διαγραφή όλων των προσαρμοσμένων emoji.",
+  "emoji_nuke_complete": "Emoji-nuke ολοκληρώθηκε: {count} emoji διαγράφηκαν",
+  "emoji_nuke_no_permission": "Δεν έχω άδεια να διαχειριστώ emoji!",
+
+  "shuffle_channels_starting": "Ξεκινά λειτουργία shuffle-channels... Τυχαία αναδιάταξη όλων των καναλιών.",
+  "shuffle_channels_complete": "Shuffle-channels ολοκληρώθηκε: {count} κανάλια αναδιατάχθηκαν",
+  "shuffle_channels_no_permission": "Δεν έχω άδεια να διαχειριστώ κανάλια!",
+
+  "voice_scatter_starting": "Ξεκινά λειτουργία voice-scatter... Διασπορά {users} χρηστών σε {channels} κανάλια.",
+  "voice_scatter_complete": "Voice-scatter ολοκληρώθηκε: {count} χρήστες μετακινήθηκαν",
+  "voice_scatter_need_channels": "Χρειάζονται τουλάχιστον 2 φωνητικά κανάλια για να διασκορπιστούν οι χρήστες!",
+  "voice_scatter_no_users": "Δεν υπάρχουν χρήστες σε φωνητικά κανάλια!",
+  "voice_scatter_no_permission": "Δεν έχω άδεια να μετακινήσω μέλη!",
+
+  "move_all_starting": "Ξεκινά λειτουργία move-all... Μετακίνηση {users} χρηστών στο {channel}.",
+  "move_all_complete": "Move-all ολοκληρώθηκε: {count} χρήστες μετακινήθηκαν στο {channel}",
+  "move_all_no_users": "Δεν υπάρχουν χρήστες σε φωνητικά κανάλια!",
+  "move_all_no_permission": "Δεν έχω άδεια να μετακινήσω μέλη!",
+
+  "mention_spam_starting": "Ξεκινά λειτουργία mention-spam... Αποστολή {count} αναφορών.",
+  "mention_spam_complete": "Mention-spam ολοκληρώθηκε: {count} αναφορές στάλθηκαν",
+  "mention_spam_invalid_count": "Παρακαλώ προσδιορίστε έναν θετικό αριθμό!",
+  "mention_spam_too_many": "Μέγιστο 100 αναφορές τη φορά!",
+  "mention_spam_no_permission": "Δεν έχω άδεια να στείλω μηνύματα ή να αναφέρω!",
+
+  "dm_success": "Μήνυμα στάλθηκε στον {user}",
+  "dm_failed": "Δεν μπόρεσα να στείλω DM στον {user} - έχουν απενεργοποιημένα τα DM",
+
+  "dmall_starting": "Ξεκινά λειτουργία DM-all... Αποστολή μηνύματος σε όλα τα μέλη.",
+  "dmall_complete": "DM-all ολοκληρώθηκε: {success} μηνύματα στάλθηκαν, {failed} απέτυχαν",
+
+  "serverinfo_sent": "Πληροφορίες διακομιστή στάλθηκαν στα DM σας!",
+  "serverinfo_dm_failed": "Δεν μπορώ να σας στείλω DM! Παρακαλώ ενεργοποιήστε τα DM από μέλη του διακομιστή.",
+
+  "shutdown_message": "Το bot τερματίζεται",
+  "shutdown_farewell": "🔴 Το bot τερματίζεται...",
+  "shutdown_initiated": "[ΤΕΡΜΑΤΙΣΜΟΣ] Τερματισμός bot ξεκίνησε από {user}",
+  "shutdown_now": "[ΤΕΡΜΑΤΙΣΜΟΣ] Το bot τερματίζεται τώρα...",
+
+  "help_footer": "Σελίδα {page}/{total} • Χρησιμοποιήστε κουμπιά για πλοήγηση",
+
+  "help_page1_title": "🔥 Εντολές Bot - Βασική Δύναμη 🔥",
+  "help_page1_desc": "Πιο σημαντικές εντολές για να πάρετε τον έλεγχο",
+  "help_god": "Δώστε στον εαυτό σας ρόλο διαχειριστή",
+  "help_god_all": "Δώστε σε ΟΛΟΥΣ δικαιώματα διαχειριστή",
+  "help_death": "☠️ Απόλυτη καταστροφή - Αποκλεισμός όλων, διαγραφή όλων των καναλιών και ρόλων",
+  "help_brainfuck": "🔥 Διαγραφή όλων των καναλιών, ατελείωτη δημιουργία και spam",
+  "help_help": "Εμφάνιση αυτού του μενού βοήθειας",
+
+  "help_page2_title": "Εντολές Bot - Συντονισμός",
+  "help_page2_desc": "Βασικές εντολές συντονισμού",
+  "help_ban": "Αποκλεισμός χρήστη από τον διακομιστή",
+  "help_unban": "Αφαίρεση αποκλεισμού χρήστη με το ID του",
+  "help_kick": "Αποβολή χρήστη από τον διακομιστή",
+  "help_mute": "Timeout χρήστη (π.χ. 10m, 1h, 1d)",
+  "help_unmute": "Αφαίρεση timeout από χρήστη",
+
+  "help_page3_title": "Εντολές Bot - Μαζικός Συντονισμός",
+  "help_page3_desc": "Εντολές μαζικού συντονισμού",
+  "help_ban_all": "Αποκλεισμός όλων των μελών στον διακομιστή",
+  "help_kick_all": "Αποβολή όλων των μελών από τον διακομιστή",
+  "help_mute_all": "Timeout όλων των μελών στον διακομιστή",
+  "help_purge": "Διαγραφή αριθμού μηνυμάτων από το κανάλι",
+
+  "help_page4_title": "Εντολές Bot - Καταστροφικές",
+  "help_page4_desc": "⚠️ Εντολές που προκαλούν μόνιμη ζημιά",
+  "help_nuke": "Διαγραφή και επαναδημιουργία καναλιού για καθαρισμό όλων των μηνυμάτων",
+  "help_nuke_all": "Διαγραφή ΟΛΩΝ των καναλιών, κατηγοριών και ρόλων",
+  "help_delchannel": "Διαγραφή συγκεκριμένου καναλιού",
+  "help_webhook_nuke": "Διαγραφή όλων των webhooks στον διακομιστή",
+  "help_emoji_nuke": "Διαγραφή όλων των προσαρμοσμένων emoji",
+
+  "help_page5_title": "Εντολές Bot - Trolling",
+  "help_page5_desc": "Διασκεδαστικές, ενοχλητικές εντολές (κυρίως αντιστρέψιμες)",
+  "help_nick_all": "Ορισμός ψευδωνύμου όλων",
+  "help_shuffle_channels": "Τυχαία αναδιάταξη όλων των καναλιών",
+  "help_voice_scatter": "Διασπορά χρηστών σε φωνητικά κανάλια",
+  "help_move_all": "Μετακίνηση όλων των χρηστών σε φωνητικό κανάλι",
+  "help_mention_spam": "Spam αόρατων αναφορών (μέγιστο 100)",
+
+  "help_page6_title": "Εντολές Bot - Διαχείριση Διακομιστή",
+  "help_page6_desc": "Εντολές προσαρμογής διακομιστή",
+  "help_rename_server": "Μετονομασία διακομιστή",
+  "help_server_icon": "Αλλαγή εικονιδίου διακομιστή",
+  "help_server_banner": "Αλλαγή banner διακομιστή (boost lvl 2+)",
+  "help_server_desc": "Αλλαγή περιγραφής διακομιστή",
+  "help_nick": "Αλλαγή ψευδωνύμου χρήστη",
+
+  "help_page7_title": "Εντολές Bot - Ρόλοι & Spam",
+  "help_page7_desc": "Εντολές διαχείρισης ρόλων και spam",
+  "help_role_spam": "Μαζική δημιουργία ρόλων",
+  "help_strip": "Αφαίρεση όλων των ρόλων από χρήστη",
+  "help_spam": "Spam μήνυμα σε όλα τα κανάλια (0 = ατελείωτα)",
+
+  "help_page8_title": "Εντολές Bot - Εργαλεία & DM",
+  "help_page8_desc": "Εντολές εργαλείων και μηνυμάτων",
+  "help_dm": "DM σε συγκεκριμένο χρήστη",
+  "help_dmall": "DM σε όλους τους χρήστες στον διακομιστή",
+  "help_serverinfo": "Λήψη λεπτομερών πληροφοριών διακομιστή",
+  "help_shutdown": "Τερματισμός του bot (Μόνο Admin)",
+
+  "error_occurred": "Προέκυψε σφάλμα: {error}"
+}

