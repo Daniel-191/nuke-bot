@@ -2,7 +2,7 @@
 * Python 3.10+
 * py-cord 2.6.0+
 ***
-# Features
+# Features 
 
 ## Bot Commands
  - [x] Delete Channels
