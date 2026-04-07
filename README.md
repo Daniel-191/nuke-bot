@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/contributors-3-brightgreen"></a>
+  <a href="#"><img src="https://img.shields.io/badge/contributors-1-brightgreen"></a>
   <a href="#"><img src="https://img.shields.io/badge/issues-0%20open-brightgreen"></a>
   <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-blue"></a>
   <a href="#"><img src="https://img.shields.io/badge/maintained-yes-green"></a>
