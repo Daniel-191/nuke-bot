@@ -1,8 +1,34 @@
-# Advanced Discord Nuke Bot  
-* Python 3.10+
-* py-cord 2.6.0+
-***  
-# Features 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/46e2284e-dd84-4d24-b025-439374e16cb0" alt="Nuke Bot banner" />
+</p>
+
+<p align="center">
+  <b>Advanced Discord Nuke Bot</b><br>
+  Python 3.10+ • py-cord 2.6.0+
+</p>
+
+<p align="center">
+  <a href="#"><img src="https://img.shields.io/badge/contributors-3-brightgreen"></a>
+  <a href="#"><img src="https://img.shields.io/badge/issues-0%20open-brightgreen"></a>
+  <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-blue"></a>
+  <a href="#"><img src="https://img.shields.io/badge/maintained-yes-green"></a>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#bot-commands">Bot Commands</a> •
+  <a href="#commands">Commands</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#configuration">Configuration</a>
+</p>
+
+<p align="center">
+  <i>A simple yet powerfull discord nuke bot.</i>
+</p>
+
+---
+
+## Features
 
 ## Bot Commands
  - [x] Delete Channels
