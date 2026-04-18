@@ -6,6 +6,7 @@ import os
 import json
 import asyncio
 import io
+import random
 from datetime import timedelta, datetime
 from colorama import Fore, Back, Style, init
 import logging
@@ -104,6 +105,25 @@ config = load_config()
 
 # Reload translations based on config language
 load_translations(config.get("language", "en"))
+
+def load_proxies():
+    """Load SOCKS4 and SOCKS5 proxies from socks4.txt and socks5.txt"""
+    proxies = []
+
+    for scheme, filename in [("socks4", "socks4.txt"), ("socks5", "socks5.txt")]:
+        if not os.path.exists(filename):
+            continue
+        with open(filename, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                # Support both plain host:port and scheme://host:port
+                if '://' not in line:
+                    line = f"{scheme}://{line}"
+                proxies.append(line)
+
+    return proxies
 
 # Create bot instance with prefix commands
 intents = discord.Intents.default()
@@ -2710,4 +2730,19 @@ if __name__ == "__main__":
         print(t("token_example"))
     else:
         print(f'{Fore.CYAN}{t("token_loaded")}{Style.RESET_ALL}')
+
+        proxies = load_proxies()
+        if proxies:
+            try:
+                from aiohttp_socks import ProxyConnector
+                selected_proxy = random.choice(proxies)
+                bot.http.connector = ProxyConnector.from_url(selected_proxy)
+                print(f'{Fore.CYAN}[PROXY] {Fore.WHITE}Using proxy: {selected_proxy} ({len(proxies)} total loaded){Style.RESET_ALL}')
+                logger.info(f"Proxy enabled: {selected_proxy} ({len(proxies)} proxies loaded)")
+            except ImportError:
+                print(f'{Fore.YELLOW}[PROXY] aiohttp_socks is not installed — proxies disabled. Run: pip install aiohttp_socks{Style.RESET_ALL}')
+                logger.warning("aiohttp_socks not installed, proxies disabled")
+        else:
+            print(f'{Fore.YELLOW}[PROXY] No proxy files found (socks4.txt / socks5.txt) — running without proxy{Style.RESET_ALL}')
+
         bot.run(token)

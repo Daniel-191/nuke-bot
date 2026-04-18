@@ -63,9 +63,9 @@
 
 - [x] Multi Lang support
 - [x] Clone/Backup server
+- [x] Proxies (SOCKS4/SOCKS5 via socks4.txt / socks5.txt)
 - [ ] Control/Nuke from console
 - [ ] Webpage interface
-- [ ] Proxies
 
 ***
 # Commands
