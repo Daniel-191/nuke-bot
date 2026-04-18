@@ -283,5 +283,20 @@
   "help_unban_all": "Unban all banned users in the server",
 
   "help_page9_title": "Bot Commands - New Features",
-  "help_page9_desc": "Additional destructive and utility commands"
+  "help_page9_desc": "Additional destructive and utility commands",
+
+  "owner_only_message": "⛔ This command is restricted to the bot owner only!",
+
+  "whitelist_add_success": "Added `{user_id}` to the whitelist",
+  "whitelist_already_added": "`{user_id}` is already in the whitelist",
+  "whitelist_remove_success": "Removed `{user_id}` from the whitelist",
+  "whitelist_not_found": "`{user_id}` is not in the whitelist",
+  "whitelist_empty": "The whitelist is empty",
+  "whitelist_list_title": "Whitelisted Users",
+  "whitelist_list_footer": "{count} user(s) whitelisted",
+  "whitelist_list_sent": "Whitelist sent to your DMs!",
+
+  "help_whitelist_add": "Add a user ID to the whitelist (owner only)",
+  "help_whitelist_remove": "Remove a user ID from the whitelist (owner only)",
+  "help_whitelist_list": "List all whitelisted user IDs (owner only)"
 }

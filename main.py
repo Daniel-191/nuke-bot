@@ -180,6 +180,11 @@ async def on_guild_remove(guild):
     """Log when bot leaves/is removed from a guild"""
     logger.info(t("bot_left_guild", guild=guild.name, guild_id=guild.id))
 
+def save_config():
+    """Write the current config dict back to config.json"""
+    with open('config.json', 'w', encoding='utf-8') as f:
+        json.dump(config, f, indent=2)
+
 # Authorization check function
 def is_authorized():
     """Check if user is bot owner or in whitelist"""
@@ -217,6 +222,29 @@ def is_authorized():
 
         return False
 
+    return commands.check(predicate)
+
+def is_owner():
+    """Check if user is the bot owner (stricter than is_authorized)"""
+    async def predicate(ctx):
+        owner_id = config.get("owner_id")
+        if owner_id and isinstance(owner_id, str) and owner_id.isdigit():
+            owner_id = int(owner_id)
+        if ctx.author.id == owner_id:
+            return True
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        embed = discord.Embed(
+            description=t("owner_only_message"),
+            color=discord.Color.red()
+        )
+        try:
+            await ctx.send(embed=embed, delete_after=5)
+        except:
+            pass
+        return False
     return commands.check(predicate)
 
 async def send_dm(ctx, content=None, embed=None):
@@ -404,6 +432,9 @@ async def help_command(ctx):
     embed8.add_field(name=f"{prefix}serverinfo", value=t("help_serverinfo"), inline=False)
     embed8.add_field(name=f"{prefix}server-backup", value=t("help_server_backup"), inline=False)
     embed8.add_field(name=f"{prefix}shutdown", value=t("help_shutdown"), inline=False)
+    embed8.add_field(name=f"{prefix}whitelist-add <id>", value=t("help_whitelist_add"), inline=False)
+    embed8.add_field(name=f"{prefix}whitelist-remove <id>", value=t("help_whitelist_remove"), inline=False)
+    embed8.add_field(name=f"{prefix}whitelist-list", value=t("help_whitelist_list"), inline=False)
     embed8.set_footer(text=t("help_footer", page=8, total=9))
     pages.append(embed8)
 
@@ -2720,6 +2751,104 @@ async def unban_all(ctx):
         await send_dm(ctx, t("unban_all_no_permission"))
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
+
+
+@is_owner()
+@bot.command(name='whitelist-add')
+async def whitelist_add(ctx, user_id: int):
+    """Add a user ID to the whitelist"""
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    whitelist = config.get("whitelist", [])
+
+    if user_id in whitelist:
+        embed = discord.Embed(
+            description=t("whitelist_already_added", user_id=user_id),
+            color=discord.Color.orange()
+        )
+        await send_dm(ctx, embed=embed)
+        return
+
+    whitelist.append(user_id)
+    config["whitelist"] = whitelist
+    save_config()
+
+    print(f'{Fore.GREEN}[WHITELIST] {Fore.WHITE}{ctx.author.display_name} added {user_id} to whitelist{Style.RESET_ALL}')
+    logger.info(f"Whitelist: {ctx.author} (ID: {ctx.author.id}) added user ID {user_id}")
+
+    embed = discord.Embed(
+        description=t("whitelist_add_success", user_id=user_id),
+        color=discord.Color.green()
+    )
+    await send_dm(ctx, embed=embed)
+
+
+@is_owner()
+@bot.command(name='whitelist-remove')
+async def whitelist_remove(ctx, user_id: int):
+    """Remove a user ID from the whitelist"""
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    whitelist = config.get("whitelist", [])
+
+    if user_id not in whitelist:
+        embed = discord.Embed(
+            description=t("whitelist_not_found", user_id=user_id),
+            color=discord.Color.orange()
+        )
+        await send_dm(ctx, embed=embed)
+        return
+
+    whitelist.remove(user_id)
+    config["whitelist"] = whitelist
+    save_config()
+
+    print(f'{Fore.YELLOW}[WHITELIST] {Fore.WHITE}{ctx.author.display_name} removed {user_id} from whitelist{Style.RESET_ALL}')
+    logger.info(f"Whitelist: {ctx.author} (ID: {ctx.author.id}) removed user ID {user_id}")
+
+    embed = discord.Embed(
+        description=t("whitelist_remove_success", user_id=user_id),
+        color=discord.Color.green()
+    )
+    await send_dm(ctx, embed=embed)
+
+
+@is_owner()
+@bot.command(name='whitelist-list')
+async def whitelist_list(ctx):
+    """List all whitelisted user IDs"""
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    whitelist = config.get("whitelist", [])
+
+    if not whitelist:
+        embed = discord.Embed(
+            description=t("whitelist_empty"),
+            color=discord.Color.blue()
+        )
+    else:
+        entries = "\n".join([f"`{uid}`" for uid in whitelist])
+        embed = discord.Embed(
+            title=t("whitelist_list_title"),
+            description=entries,
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text=t("whitelist_list_footer", count=len(whitelist)))
+
+    try:
+        await ctx.author.send(embed=embed)
+        await ctx.send(t("whitelist_list_sent"), delete_after=3)
+    except discord.Forbidden:
+        await ctx.send(embed=embed, delete_after=10)
 
 
 if __name__ == "__main__":
