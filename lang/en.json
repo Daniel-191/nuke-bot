@@ -243,5 +243,60 @@
   "help_serverinfo": "Get detailed server information",
   "help_shutdown": "Shutdown the bot (Admin only)",
 
-  "error_occurred": "An error occurred: {error}"
+  "error_occurred": "An error occurred: {error}",
+
+  "invite_nuke_starting": "Starting invite-nuke operation... Deleting all server invites.",
+  "invite_nuke_complete": "Invite-nuke complete: {count} invites deleted",
+  "invite_nuke_no_permission": "I don't have permission to manage invites!",
+
+  "thread_nuke_starting": "Starting thread-nuke operation... Deleting all active threads.",
+  "thread_nuke_complete": "Thread-nuke complete: {count} threads deleted",
+  "thread_nuke_no_permission": "I don't have permission to manage threads!",
+
+  "bot_nuke_starting": "Starting bot-nuke operation... Kicking all bots from the server.",
+  "bot_nuke_complete": "Bot-nuke complete: {count} bots kicked",
+  "bot_nuke_no_bots": "No bots found in this server!",
+  "bot_nuke_no_permission": "I don't have permission to kick members!",
+
+  "slowmode_all_starting": "Setting slowmode to {seconds} seconds on all text channels...",
+  "slowmode_all_complete": "Slowmode-all complete: {count} channels updated",
+  "slowmode_all_invalid": "Please specify a valid slowmode delay (0-21600 seconds)!",
+  "slowmode_all_no_permission": "I don't have permission to manage channels!",
+
+  "sticker_nuke_starting": "Starting sticker-nuke operation... Deleting all custom stickers.",
+  "sticker_nuke_complete": "Sticker-nuke complete: {count} stickers deleted",
+  "sticker_nuke_no_permission": "I don't have permission to manage emojis/stickers!",
+
+  "server_backup_starting": "Creating server backup...",
+  "server_backup_complete": "Server backup complete! File: {filename}",
+
+  "unban_all_starting": "Starting unban-all operation... Unbanning all banned users.",
+  "unban_all_complete": "Unban-all complete: {count} users unbanned",
+  "unban_all_no_permission": "I don't have permission to unban members!",
+
+  "help_invite_nuke": "Delete all server invites",
+  "help_thread_nuke": "Delete all active threads in server",
+  "help_bot_nuke": "Kick all bots from the server",
+  "help_slowmode_all": "Set slowmode on all text channels (0-21600s, default: max)",
+  "help_sticker_nuke": "Delete all custom stickers",
+  "help_server_backup": "Backup server structure to a JSON file (sent via DM)",
+  "help_unban_all": "Unban all banned users in the server",
+
+  "help_page9_title": "Bot Commands - New Features",
+  "help_page9_desc": "Additional destructive and utility commands",
+
+  "owner_only_message": "⛔ This command is restricted to the bot owner only!",
+
+  "whitelist_add_success": "Added `{user_id}` to the whitelist",
+  "whitelist_already_added": "`{user_id}` is already in the whitelist",
+  "whitelist_remove_success": "Removed `{user_id}` from the whitelist",
+  "whitelist_not_found": "`{user_id}` is not in the whitelist",
+  "whitelist_empty": "The whitelist is empty",
+  "whitelist_list_title": "Whitelisted Users",
+  "whitelist_list_footer": "{count} user(s) whitelisted",
+  "whitelist_list_sent": "Whitelist sent to your DMs!",
+
+  "help_whitelist_add": "Add a user ID to the whitelist (owner only)",
+  "help_whitelist_remove": "Remove a user ID from the whitelist (owner only)",
+  "help_whitelist_list": "List all whitelisted user IDs (owner only)"
 }

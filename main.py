@@ -5,6 +5,8 @@ from discord.ext import commands
 import os
 import json
 import asyncio
+import io
+import random
 from datetime import timedelta, datetime
 from colorama import Fore, Back, Style, init
 import logging
@@ -104,6 +106,25 @@ config = load_config()
 # Reload translations based on config language
 load_translations(config.get("language", "en"))
 
+def load_proxies():
+    """Load SOCKS4 and SOCKS5 proxies from socks4.txt and socks5.txt"""
+    proxies = []
+
+    for scheme, filename in [("socks4", "socks4.txt"), ("socks5", "socks5.txt")]:
+        if not os.path.exists(filename):
+            continue
+        with open(filename, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                # Support both plain host:port and scheme://host:port
+                if '://' not in line:
+                    line = f"{scheme}://{line}"
+                proxies.append(line)
+
+    return proxies
+
 # Create bot instance with prefix commands
 intents = discord.Intents.default()
 intents.message_content = True
@@ -159,6 +180,11 @@ async def on_guild_remove(guild):
     """Log when bot leaves/is removed from a guild"""
     logger.info(t("bot_left_guild", guild=guild.name, guild_id=guild.id))
 
+def save_config():
+    """Write the current config dict back to config.json"""
+    with open('config.json', 'w', encoding='utf-8') as f:
+        json.dump(config, f, indent=2)
+
 # Authorization check function
 def is_authorized():
     """Check if user is bot owner or in whitelist"""
@@ -196,6 +222,29 @@ def is_authorized():
 
         return False
 
+    return commands.check(predicate)
+
+def is_owner():
+    """Check if user is the bot owner (stricter than is_authorized)"""
+    async def predicate(ctx):
+        owner_id = config.get("owner_id")
+        if owner_id and isinstance(owner_id, str) and owner_id.isdigit():
+            owner_id = int(owner_id)
+        if ctx.author.id == owner_id:
+            return True
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        embed = discord.Embed(
+            description=t("owner_only_message"),
+            color=discord.Color.red()
+        )
+        try:
+            await ctx.send(embed=embed, delete_after=5)
+        except:
+            pass
+        return False
     return commands.check(predicate)
 
 async def send_dm(ctx, content=None, embed=None):
@@ -287,7 +336,7 @@ async def help_command(ctx):
     embed1.add_field(name=f"{prefix}death", value=t("help_death"), inline=False)
     embed1.add_field(name=f"{prefix}brainfuck <name> <message>", value=t("help_brainfuck"), inline=False)
     embed1.add_field(name=f"{prefix}help", value=t("help_help"), inline=False)
-    embed1.set_footer(text=t("help_footer", page=1, total=8))
+    embed1.set_footer(text=t("help_footer", page=1, total=9))
     pages.append(embed1)
 
     # Page 2: Moderation Commands
@@ -301,7 +350,7 @@ async def help_command(ctx):
     embed2.add_field(name=f"{prefix}kick <@user> [reason]", value=t("help_kick"), inline=False)
     embed2.add_field(name=f"{prefix}mute <@user> [duration] [reason]", value=t("help_mute"), inline=False)
     embed2.add_field(name=f"{prefix}unmute <@user>", value=t("help_unmute"), inline=False)
-    embed2.set_footer(text=t("help_footer", page=2, total=8))
+    embed2.set_footer(text=t("help_footer", page=2, total=9))
     pages.append(embed2)
 
     # Page 3: Mass Moderation
@@ -314,7 +363,8 @@ async def help_command(ctx):
     embed3.add_field(name=f"{prefix}kick-all [reason]", value=t("help_kick_all"), inline=False)
     embed3.add_field(name=f"{prefix}mute-all [duration] [reason]", value=t("help_mute_all"), inline=False)
     embed3.add_field(name=f"{prefix}purge <amount>", value=t("help_purge"), inline=False)
-    embed3.set_footer(text=t("help_footer", page=3, total=8))
+    embed3.add_field(name=f"{prefix}unban-all", value=t("help_unban_all"), inline=False)
+    embed3.set_footer(text=t("help_footer", page=3, total=9))
     pages.append(embed3)
 
     # Page 4: Destructive Commands
@@ -328,7 +378,7 @@ async def help_command(ctx):
     embed4.add_field(name=f"{prefix}delchannel <#channel>", value=t("help_delchannel"), inline=False)
     embed4.add_field(name=f"{prefix}webhook-nuke", value=t("help_webhook_nuke"), inline=False)
     embed4.add_field(name=f"{prefix}emoji-nuke", value=t("help_emoji_nuke"), inline=False)
-    embed4.set_footer(text=t("help_footer", page=4, total=8))
+    embed4.set_footer(text=t("help_footer", page=4, total=9))
     pages.append(embed4)
 
     # Page 5: Trolling Commands
@@ -342,7 +392,7 @@ async def help_command(ctx):
     embed5.add_field(name=f"{prefix}voice-scatter", value=t("help_voice_scatter"), inline=False)
     embed5.add_field(name=f"{prefix}move-all <#voice>", value=t("help_move_all"), inline=False)
     embed5.add_field(name=f"{prefix}mention-spam <target> <count>", value=t("help_mention_spam"), inline=False)
-    embed5.set_footer(text=t("help_footer", page=5, total=8))
+    embed5.set_footer(text=t("help_footer", page=5, total=9))
     pages.append(embed5)
 
     # Page 6: Server Management
@@ -356,7 +406,7 @@ async def help_command(ctx):
     embed6.add_field(name=f"{prefix}server-banner <url>", value=t("help_server_banner"), inline=False)
     embed6.add_field(name=f"{prefix}server-desc <text>", value=t("help_server_desc"), inline=False)
     embed6.add_field(name=f"{prefix}nick <@user> <nickname>", value=t("help_nick"), inline=False)
-    embed6.set_footer(text=t("help_footer", page=6, total=8))
+    embed6.set_footer(text=t("help_footer", page=6, total=9))
     pages.append(embed6)
 
     # Page 7: Role & Spam Commands
@@ -368,7 +418,7 @@ async def help_command(ctx):
     embed7.add_field(name=f"{prefix}role-spam <name> <count>", value=t("help_role_spam"), inline=False)
     embed7.add_field(name=f"{prefix}strip <@user>", value=t("help_strip"), inline=False)
     embed7.add_field(name=f"{prefix}spam <count> <message>", value=t("help_spam"), inline=False)
-    embed7.set_footer(text=t("help_footer", page=7, total=8))
+    embed7.set_footer(text=t("help_footer", page=7, total=9))
     pages.append(embed7)
 
     # Page 8: Utility & DM Commands
@@ -380,9 +430,27 @@ async def help_command(ctx):
     embed8.add_field(name=f"{prefix}dm <@user> <message>", value=t("help_dm"), inline=False)
     embed8.add_field(name=f"{prefix}dmall <message>", value=t("help_dmall"), inline=False)
     embed8.add_field(name=f"{prefix}serverinfo", value=t("help_serverinfo"), inline=False)
+    embed8.add_field(name=f"{prefix}server-backup", value=t("help_server_backup"), inline=False)
     embed8.add_field(name=f"{prefix}shutdown", value=t("help_shutdown"), inline=False)
-    embed8.set_footer(text=t("help_footer", page=8, total=8))
+    embed8.add_field(name=f"{prefix}whitelist-add <id>", value=t("help_whitelist_add"), inline=False)
+    embed8.add_field(name=f"{prefix}whitelist-remove <id>", value=t("help_whitelist_remove"), inline=False)
+    embed8.add_field(name=f"{prefix}whitelist-list", value=t("help_whitelist_list"), inline=False)
+    embed8.set_footer(text=t("help_footer", page=8, total=9))
     pages.append(embed8)
+
+    # Page 9: New Features
+    embed9 = discord.Embed(
+        title=t("help_page9_title"),
+        description=t("help_page9_desc"),
+        color=discord.Color.dark_magenta()
+    )
+    embed9.add_field(name=f"{prefix}invite-nuke", value=t("help_invite_nuke"), inline=False)
+    embed9.add_field(name=f"{prefix}thread-nuke", value=t("help_thread_nuke"), inline=False)
+    embed9.add_field(name=f"{prefix}bot-nuke", value=t("help_bot_nuke"), inline=False)
+    embed9.add_field(name=f"{prefix}slowmode-all <seconds>", value=t("help_slowmode_all"), inline=False)
+    embed9.add_field(name=f"{prefix}sticker-nuke", value=t("help_sticker_nuke"), inline=False)
+    embed9.set_footer(text=t("help_footer", page=9, total=9))
+    pages.append(embed9)
 
     # Create view and send message
     view = HelpView(pages, ctx.author)
@@ -2299,6 +2367,490 @@ async def shutdown(ctx):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+@is_authorized()
+@bot.command(name='invite-nuke')
+@commands.has_permissions(manage_guild=True)
+async def invite_nuke(ctx):
+    """Delete all server invites"""
+    try:
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.RED}[INVITE-NUKE] {Fore.WHITE}Invite nuke initiated by {author.display_name} in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            await author.send(t("invite_nuke_starting"))
+        except:
+            pass
+
+        invites = await guild.invites()
+        deleted = 0
+
+        for invite in invites:
+            try:
+                await invite.delete(reason=f"Invite nuke by {author}")
+                deleted += 1
+            except:
+                pass
+
+        print(f'{Fore.RED}[INVITE-NUKE] {Fore.WHITE}Complete: {deleted} invites deleted in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            embed = discord.Embed(
+                description=t("invite_nuke_complete", count=deleted),
+                color=discord.Color.red()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, t("invite_nuke_no_permission"))
+    except Exception as e:
+        await send_dm(ctx, t("error_occurred", error=str(e)))
+
+
+@is_authorized()
+@bot.command(name='thread-nuke')
+@commands.has_permissions(manage_threads=True)
+async def thread_nuke(ctx):
+    """Delete all active threads in the server"""
+    try:
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.RED}[THREAD-NUKE] {Fore.WHITE}Thread nuke initiated by {author.display_name} in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            await author.send(t("thread_nuke_starting"))
+        except:
+            pass
+
+        deleted = 0
+
+        for thread in list(guild.threads):
+            try:
+                await thread.delete()
+                deleted += 1
+            except:
+                pass
+
+        print(f'{Fore.RED}[THREAD-NUKE] {Fore.WHITE}Complete: {deleted} threads deleted in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            embed = discord.Embed(
+                description=t("thread_nuke_complete", count=deleted),
+                color=discord.Color.red()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, t("thread_nuke_no_permission"))
+    except Exception as e:
+        await send_dm(ctx, t("error_occurred", error=str(e)))
+
+
+@is_authorized()
+@bot.command(name='bot-nuke')
+@commands.has_permissions(kick_members=True)
+async def bot_nuke(ctx):
+    """Kick all bots from the server"""
+    try:
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        bots = [m for m in guild.members if m.bot and m.id != bot.user.id]
+
+        if not bots:
+            await send_dm(ctx, t("bot_nuke_no_bots"))
+            return
+
+        print(f'{Fore.RED}[BOT-NUKE] {Fore.WHITE}Bot nuke initiated by {author.display_name} in {guild.name} | {len(bots)} bots found{Style.RESET_ALL}')
+
+        try:
+            await author.send(t("bot_nuke_starting"))
+        except:
+            pass
+
+        kicked = 0
+
+        for member in bots:
+            try:
+                await member.kick(reason=f"Bot nuke by {author}")
+                kicked += 1
+            except:
+                pass
+
+        print(f'{Fore.RED}[BOT-NUKE] {Fore.WHITE}Complete: {kicked} bots kicked in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            embed = discord.Embed(
+                description=t("bot_nuke_complete", count=kicked),
+                color=discord.Color.red()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, t("bot_nuke_no_permission"))
+    except Exception as e:
+        await send_dm(ctx, t("error_occurred", error=str(e)))
+
+
+@is_authorized()
+@bot.command(name='slowmode-all')
+@commands.has_permissions(manage_channels=True)
+async def slowmode_all(ctx, seconds: int = 21600):
+    """Set slowmode on all text channels"""
+    if seconds < 0 or seconds > 21600:
+        await send_dm(ctx, t("slowmode_all_invalid"))
+        return
+
+    try:
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.YELLOW}[SLOWMODE-ALL] {Fore.WHITE}Slowmode-all ({seconds}s) initiated by {author.display_name} in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            await author.send(t("slowmode_all_starting", seconds=seconds))
+        except:
+            pass
+
+        count = 0
+
+        for channel in guild.text_channels:
+            try:
+                await channel.edit(slowmode_delay=seconds, reason=f"Slowmode-all by {author}")
+                count += 1
+            except:
+                pass
+
+        print(f'{Fore.YELLOW}[SLOWMODE-ALL] {Fore.WHITE}Complete: {count} channels updated in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            embed = discord.Embed(
+                description=t("slowmode_all_complete", count=count),
+                color=discord.Color.orange()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, t("slowmode_all_no_permission"))
+    except Exception as e:
+        await send_dm(ctx, t("error_occurred", error=str(e)))
+
+
+@is_authorized()
+@bot.command(name='sticker-nuke')
+@commands.has_permissions(manage_emojis_and_stickers=True)
+async def sticker_nuke(ctx):
+    """Delete all custom stickers in the server"""
+    try:
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.RED}[STICKER-NUKE] {Fore.WHITE}Sticker nuke initiated by {author.display_name} in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            await author.send(t("sticker_nuke_starting"))
+        except:
+            pass
+
+        stickers = await guild.fetch_stickers()
+        deleted = 0
+
+        for sticker in stickers:
+            try:
+                await sticker.delete(reason=f"Sticker nuke by {author}")
+                deleted += 1
+            except:
+                pass
+
+        print(f'{Fore.RED}[STICKER-NUKE] {Fore.WHITE}Complete: {deleted} stickers deleted in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            embed = discord.Embed(
+                description=t("sticker_nuke_complete", count=deleted),
+                color=discord.Color.red()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, t("sticker_nuke_no_permission"))
+    except Exception as e:
+        await send_dm(ctx, t("error_occurred", error=str(e)))
+
+
+@is_authorized()
+@bot.command(name='server-backup')
+async def server_backup(ctx):
+    """Backup server structure to a JSON file sent via DM"""
+    try:
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.CYAN}[SERVER-BACKUP] {Fore.WHITE}Server backup initiated by {author.display_name} in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            await author.send(t("server_backup_starting"))
+        except:
+            pass
+
+        backup = {
+            "name": guild.name,
+            "id": str(guild.id),
+            "description": guild.description or "",
+            "member_count": guild.member_count,
+            "created_at": guild.created_at.isoformat(),
+            "backed_up_at": datetime.now().isoformat(),
+            "roles": [],
+            "categories": [],
+            "channels": [],
+            "emojis": []
+        }
+
+        for role in guild.roles:
+            if role.is_default():
+                continue
+            backup["roles"].append({
+                "name": role.name,
+                "color": str(role.color),
+                "permissions": role.permissions.value,
+                "mentionable": role.mentionable,
+                "hoist": role.hoist,
+                "position": role.position
+            })
+
+        for category in guild.categories:
+            backup["categories"].append({
+                "name": category.name,
+                "position": category.position
+            })
+
+        for channel in guild.channels:
+            if isinstance(channel, discord.CategoryChannel):
+                continue
+            channel_data = {
+                "name": channel.name,
+                "type": str(channel.type),
+                "position": channel.position,
+                "category": channel.category.name if channel.category else None
+            }
+            if isinstance(channel, discord.TextChannel):
+                channel_data["topic"] = channel.topic or ""
+                channel_data["nsfw"] = channel.nsfw
+                channel_data["slowmode_delay"] = channel.slowmode_delay
+            backup["channels"].append(channel_data)
+
+        for emoji in guild.emojis:
+            backup["emojis"].append({
+                "name": emoji.name,
+                "animated": emoji.animated,
+                "id": str(emoji.id)
+            })
+
+        filename = f"backup_{guild.name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        backup_json = json.dumps(backup, indent=2, ensure_ascii=False)
+        file_obj = discord.File(fp=io.BytesIO(backup_json.encode('utf-8')), filename=filename)
+
+        try:
+            embed = discord.Embed(
+                description=t("server_backup_complete", filename=filename),
+                color=discord.Color.green()
+            )
+            await author.send(embed=embed, file=file_obj)
+        except discord.Forbidden:
+            pass
+
+        print(f'{Fore.CYAN}[SERVER-BACKUP] {Fore.WHITE}Complete: backup sent for {guild.name}{Style.RESET_ALL}')
+
+    except Exception as e:
+        await send_dm(ctx, t("error_occurred", error=str(e)))
+
+
+@is_authorized()
+@bot.command(name='unban-all')
+@commands.has_permissions(ban_members=True)
+async def unban_all(ctx):
+    """Unban all banned users in the server"""
+    try:
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        guild = ctx.guild
+        author = ctx.author
+
+        print(f'{Fore.YELLOW}[UNBAN-ALL] {Fore.WHITE}Unban-all initiated by {author.display_name} in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            await author.send(t("unban_all_starting"))
+        except:
+            pass
+
+        unbanned = 0
+
+        async for ban_entry in guild.bans(limit=None):
+            try:
+                await guild.unban(ban_entry.user, reason=f"Unban-all by {author}")
+                unbanned += 1
+            except:
+                pass
+
+        print(f'{Fore.YELLOW}[UNBAN-ALL] {Fore.WHITE}Complete: {unbanned} users unbanned in {guild.name}{Style.RESET_ALL}')
+
+        try:
+            embed = discord.Embed(
+                description=t("unban_all_complete", count=unbanned),
+                color=discord.Color.green()
+            )
+            await author.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+    except discord.Forbidden:
+        await send_dm(ctx, t("unban_all_no_permission"))
+    except Exception as e:
+        await send_dm(ctx, t("error_occurred", error=str(e)))
+
+
+@is_owner()
+@bot.command(name='whitelist-add')
+async def whitelist_add(ctx, user_id: int):
+    """Add a user ID to the whitelist"""
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    whitelist = config.get("whitelist", [])
+
+    if user_id in whitelist:
+        embed = discord.Embed(
+            description=t("whitelist_already_added", user_id=user_id),
+            color=discord.Color.orange()
+        )
+        await send_dm(ctx, embed=embed)
+        return
+
+    whitelist.append(user_id)
+    config["whitelist"] = whitelist
+    save_config()
+
+    print(f'{Fore.GREEN}[WHITELIST] {Fore.WHITE}{ctx.author.display_name} added {user_id} to whitelist{Style.RESET_ALL}')
+    logger.info(f"Whitelist: {ctx.author} (ID: {ctx.author.id}) added user ID {user_id}")
+
+    embed = discord.Embed(
+        description=t("whitelist_add_success", user_id=user_id),
+        color=discord.Color.green()
+    )
+    await send_dm(ctx, embed=embed)
+
+
+@is_owner()
+@bot.command(name='whitelist-remove')
+async def whitelist_remove(ctx, user_id: int):
+    """Remove a user ID from the whitelist"""
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    whitelist = config.get("whitelist", [])
+
+    if user_id not in whitelist:
+        embed = discord.Embed(
+            description=t("whitelist_not_found", user_id=user_id),
+            color=discord.Color.orange()
+        )
+        await send_dm(ctx, embed=embed)
+        return
+
+    whitelist.remove(user_id)
+    config["whitelist"] = whitelist
+    save_config()
+
+    print(f'{Fore.YELLOW}[WHITELIST] {Fore.WHITE}{ctx.author.display_name} removed {user_id} from whitelist{Style.RESET_ALL}')
+    logger.info(f"Whitelist: {ctx.author} (ID: {ctx.author.id}) removed user ID {user_id}")
+
+    embed = discord.Embed(
+        description=t("whitelist_remove_success", user_id=user_id),
+        color=discord.Color.green()
+    )
+    await send_dm(ctx, embed=embed)
+
+
+@is_owner()
+@bot.command(name='whitelist-list')
+async def whitelist_list(ctx):
+    """List all whitelisted user IDs"""
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    whitelist = config.get("whitelist", [])
+
+    if not whitelist:
+        embed = discord.Embed(
+            description=t("whitelist_empty"),
+            color=discord.Color.blue()
+        )
+    else:
+        entries = "\n".join([f"`{uid}`" for uid in whitelist])
+        embed = discord.Embed(
+            title=t("whitelist_list_title"),
+            description=entries,
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text=t("whitelist_list_footer", count=len(whitelist)))
+
+    try:
+        await ctx.author.send(embed=embed)
+        await ctx.send(t("whitelist_list_sent"), delete_after=3)
+    except discord.Forbidden:
+        await ctx.send(embed=embed, delete_after=10)
+
+
 if __name__ == "__main__":
     token = config.get("token")
     if not token:
@@ -2307,4 +2859,22 @@ if __name__ == "__main__":
         print(t("token_example"))
     else:
         print(f'{Fore.CYAN}{t("token_loaded")}{Style.RESET_ALL}')
+
+        if config.get("proxies", False):
+            proxies = load_proxies()
+            if proxies:
+                try:
+                    from aiohttp_socks import ProxyConnector
+                    selected_proxy = random.choice(proxies)
+                    bot.http.connector = ProxyConnector.from_url(selected_proxy)
+                    print(f'{Fore.CYAN}[PROXY] {Fore.WHITE}Using proxy: {selected_proxy} ({len(proxies)} total loaded){Style.RESET_ALL}')
+                    logger.info(f"Proxy enabled: {selected_proxy} ({len(proxies)} proxies loaded)")
+                except ImportError:
+                    print(f'{Fore.YELLOW}[PROXY] aiohttp_socks is not installed — proxies disabled. Run: pip install aiohttp_socks{Style.RESET_ALL}')
+                    logger.warning("aiohttp_socks not installed, proxies disabled")
+            else:
+                print(f'{Fore.YELLOW}[PROXY] Proxies enabled in config but no proxies found in socks4.txt / socks5.txt{Style.RESET_ALL}')
+        else:
+            print(f'{Fore.CYAN}[PROXY] {Fore.WHITE}Proxies disabled — set "proxies": true in config.json to enable{Style.RESET_ALL}')
+
         bot.run(token)

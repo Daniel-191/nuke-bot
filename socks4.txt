@@ -1,0 +1,7 @@
+# SOCKS4 Proxy List
+# Add one proxy per line in the format: host:port
+# Lines starting with # are ignored
+#
+# Examples:
+# 192.168.1.1:1080
+# 10.0.0.1:4145

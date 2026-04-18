@@ -7,7 +7,6 @@
   "token_add_instruction": "Vänligen lägg till din bot-token och ägar-ID till config.json",
   "token_example": "Exempel: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"YOUR_USER_ID\", \"whitelist\": []}",
   "token_loaded": "[CONFIG] Bot-token laddad från config.json",
-
   "ready_online": "[REDO] {bot_user} är nu online!",
   "ready_bot_id": "[REDO] Bot-ID: {bot_id}",
   "bot_started": "BOT STARTAD - {bot_user} (ID: {bot_id}) | Ansluten till {guild_count} server(ar): {guild_list}",
@@ -16,35 +15,28 @@
   "bot_shutdown_complete": "BOT AVSTÄNGNING KLAR",
   "bot_joined_guild": "BOT GICK MED I SERVER - Server: {guild} (ID: {guild_id}) | Medlemmar: {member_count} | Ägare: {owner} (ID: {owner_id})",
   "bot_left_guild": "BOT LÄMNADE SERVER - Server: {guild} (ID: {guild_id})",
-
   "unauthorized": "OBEHÖRIG ÅTKOMST - Användare: {user} (ID: {user_id}) | Kommando: {command} | Server: {guild} (ID: {guild_id})",
   "unauthorized_message": "⛔ Du är inte behörig att använda denna bot!",
-
   "command_executed": "KOMMANDO UTFÖRT - Användare: {user} (ID: {user_id}) | Kommando: {command} {args} | Server: {guild} (ID: {guild_id}) | Kanal: #{channel}",
   "command_error": "KOMMANDOFEL - Användare: {user} (ID: {user_id}) | Kommando: {command} | Server: {guild} | Fel: {error}",
-
   "help_sent": "Hjälpmeny skickad till dina DM!",
   "help_dm_failed": "Jag kan inte skicka DM till dig! Vänligen aktivera DM från servermedlemmar.",
   "button_unauthorized": "⛔ Du kan inte använda dessa knappar!",
-
   "ban_success": "Bannade {member}",
   "ban_yourself": "Du kan inte banna dig själv!",
   "ban_higher_role": "Du kan inte banna någon med en högre eller lika roll!",
   "ban_bot_no_permission": "Jag kan inte banna någon med en högre eller lika roll än mig!",
   "ban_no_permission": "Jag har inte behörighet att banna denna användare!",
   "ban_dm": "Du har blivit bannad i **{guild}** för {reason}",
-
   "unban_success": "Avbannade {user}",
   "unban_not_found": "Användare hittades inte eller inte bannad!",
   "unban_no_permission": "Jag har inte behörighet att avbanna användare!",
-
   "kick_success": "Kickade {member}",
   "kick_yourself": "Du kan inte kicka dig själv!",
   "kick_higher_role": "Du kan inte kicka någon med en högre eller lika roll!",
   "kick_bot_no_permission": "Jag kan inte kicka någon med en högre eller lika roll än mig!",
   "kick_no_permission": "Jag har inte behörighet att kicka denna användare!",
   "kick_dm": "Du har blivit kickad från **{guild}** för {reason}",
-
   "mute_success": "Tystade {member} i {duration}",
   "mute_yourself": "Du kan inte tysta dig själv!",
   "mute_higher_role": "Du kan inte tysta någon med en högre eller lika roll!",
@@ -53,136 +45,103 @@
   "mute_invalid_format": "Ogiltigt varaktighetsformat! Exempel: 10m, 1h, 30s, 1d",
   "mute_no_permission": "Jag har inte behörighet att timeout denna användare!",
   "mute_dm": "Du har blivit tystad i **{guild}** för {reason}",
-
   "unmute_success": "Avtystad {member}",
   "unmute_no_permission": "Jag har inte behörighet att ta bort timeout från denna användare!",
-
   "purge_success": "Rensade {count} meddelanden i {channel}",
   "purge_invalid_amount": "Vänligen ange ett positivt antal meddelanden att rensa!",
   "purge_too_many": "Du kan bara rensa upp till 1000 meddelanden åt gången!",
   "purge_no_permission": "Jag har inte behörighet att radera meddelanden i denna kanal!",
-
   "god_activated": "Gud-läge aktiverat för {user}",
   "god_no_permission": "Jag har inte behörighet att skapa roller eller tilldela dem!",
-
   "god_all_initiated": "👑 GOD-ALL INITIERAD 👑\nGer administratörsbehörigheter till alla medlemmar...",
   "god_all_complete": "Gud-läge aktiverat för {count} medlemmar",
-
   "nuke_all_starting": "Startar nuke-all operation... Detta kan ta ett tag.",
   "nuke_all_complete": "Nuke-all klar: {channels} kanaler, {categories} kategorier, {roles} roller raderade",
   "nuke_all_no_permission": "Jag har inte behörighet att utföra nuke-all operation!",
-
   "delchannel_success": "Raderade #{channel}",
   "delchannel_no_permission": "Jag har inte behörighet att radera den kanalen!",
-
   "nuke_channel_success": "Nukade {channel}",
   "nuke_channel_no_permission": "Jag har inte behörighet att radera/skapa kanaler!",
-
   "ban_all_starting": "Startar ban-all operation... Detta kan ta ett tag.",
   "ban_all_complete": "Bannade {count} medlemmar",
   "ban_all_no_permission": "Jag har inte behörighet att banna medlemmar!",
-
   "kick_all_starting": "Startar kick-all operation... Detta kan ta ett tag.",
   "kick_all_complete": "Kickade {count} medlemmar",
   "kick_all_no_permission": "Jag har inte behörighet att kicka medlemmar!",
-
   "mute_all_starting": "Startar mute-all operation för {duration}... Detta kan ta ett tag.",
   "mute_all_complete": "Tystade {count} medlemmar i {duration}",
   "mute_all_no_permission": "Jag har inte behörighet att timeout medlemmar!",
-
   "death_initiated": "⚠️ DEATH KOMMANDO INITIERAT ⚠️\nRaderar alla kanaler, roller och bannar alla medlemmar...",
   "death_complete": "DEATH klar: {banned} bannade, {channels} kanaler raderade, {roles} roller raderade",
   "death_no_permission": "Jag har inte behörighet att utföra DEATH kommando!",
-
   "brainfuck_initiated": "🔥 BRAINFUCK OÄNDLIGT LÄGE INITIERAT 🔥\nRaderar alla kanaler...\nSedan kontinuerligt skapa kanaler och spamma för evigt!",
   "brainfuck_active": "⚡ OÄNDLIGT LÄGE AKTIVT - Skapar och spammar för evigt!",
   "brainfuck_no_permission": "Jag har inte behörighet att utföra BRAINFUCK kommando!",
-
   "spam_infinite_started": "⚠️ OÄNDLIGT SPAM-LÄGE AKTIVERAT ⚠️\nSpammar i alla kanaler: \"{message}\"\n\nDetta kommer fortsätta på obestämd tid!",
   "spam_starting": "Spam startad: Skickar \"{message}\" {count} gånger i varje kanal...",
   "spam_complete": "Spam klar: {sent} meddelanden skickade i {channels} kanaler",
   "spam_no_permission": "Jag har inte behörighet att skicka meddelanden i kanaler!",
-
   "rename_server_success": "Server omdöpt till **{name}**",
   "rename_server_no_permission": "Jag har inte behörighet att byta namn på servern!",
-
   "server_icon_success": "Serverikon uppdaterad framgångsrikt",
   "server_icon_failed": "Misslyckades att ladda ner bild från URL!",
   "server_icon_no_permission": "Jag har inte behörighet att ändra serverikonen!",
-
   "server_banner_success": "Serverbanner uppdaterad framgångsrikt",
   "server_banner_no_feature": "Denna server har inte tillgång till banners! (Kräver boost-nivå 2)",
   "server_banner_failed": "Misslyckades att ladda ner bild från URL!",
   "server_banner_no_permission": "Jag har inte behörighet att ändra serverbannern!",
-
   "server_desc_success": "Serverbeskrivning uppdaterad framgångsrikt",
   "server_desc_no_permission": "Jag har inte behörighet att ändra serverbeskrivningen!",
-
   "nick_success": "Ändrade {member}s smeknamn till **{nickname}**",
   "nick_higher_role": "Jag kan inte ändra smeknamnet för {member} - de har en högre eller lika roll än mig!",
   "nick_no_permission": "Jag har inte behörighet att ändra {member}s smeknamn!",
-
   "nick_all_starting": "Startar nick-all operation... Sätter alla smeknamn till \"{nickname}\"",
   "nick_all_complete": "Nick-all klar: {count} smeknamn ändrade, {failed} misslyckades",
   "nick_all_no_permission": "Jag har inte behörighet att ändra smeknamn!",
-
   "role_spam_starting": "Startar role-spam operation... Skapar {count} roller med namn \"{name}\"",
   "role_spam_complete": "Role-spam klar: {created} roller skapade, {failed} misslyckades",
   "role_spam_invalid_count": "Vänligen ange ett positivt antal roller att skapa!",
   "role_spam_too_many": "Du kan bara skapa upp till 250 roller åt gången!",
   "role_spam_no_permission": "Jag har inte behörighet att skapa roller!",
-
   "webhook_nuke_starting": "Startar webhook-nuke operation... Raderar alla webhooks.",
   "webhook_nuke_complete": "Webhook-nuke klar: {count} webhooks raderade",
   "webhook_nuke_no_permission": "Jag har inte behörighet att hantera webhooks!",
-
   "strip_yourself": "Du kan inte ta bort dina egna roller!",
   "strip_higher_role": "Jag kan inte ta bort roller från {member} - de har en högre eller lika roll än mig!",
   "strip_no_roles": "{member} har inga borttagbara roller!",
   "strip_success": "Tog bort {count} roller från {member}",
   "strip_no_permission": "Jag har inte behörighet att ta bort roller från {member}!",
-
   "emoji_nuke_starting": "Startar emoji-nuke operation... Raderar alla anpassade emojis.",
   "emoji_nuke_complete": "Emoji-nuke klar: {count} emojis raderade",
   "emoji_nuke_no_permission": "Jag har inte behörighet att hantera emojis!",
-
   "shuffle_channels_starting": "Startar shuffle-channels operation... Blanda om alla kanaler slumpmässigt.",
   "shuffle_channels_complete": "Shuffle-channels klar: {count} kanaler omordnade",
   "shuffle_channels_no_permission": "Jag har inte behörighet att hantera kanaler!",
-
   "voice_scatter_starting": "Startar voice-scatter operation... Sprider {users} användare över {channels} kanaler.",
   "voice_scatter_complete": "Voice-scatter klar: {count} användare flyttade",
   "voice_scatter_need_channels": "Behöver minst 2 röstkanaler för att sprida användare!",
   "voice_scatter_no_users": "Inga användare i röstkanaler!",
   "voice_scatter_no_permission": "Jag har inte behörighet att flytta medlemmar!",
-
   "move_all_starting": "Startar move-all operation... Flyttar {users} användare till {channel}.",
   "move_all_complete": "Move-all klar: {count} användare flyttade till {channel}",
   "move_all_no_users": "Inga användare i röstkanaler!",
   "move_all_no_permission": "Jag har inte behörighet att flytta medlemmar!",
-
   "mention_spam_starting": "Startar mention-spam operation... Skickar {count} omnämnanden.",
   "mention_spam_complete": "Mention-spam klar: {count} omnämnanden skickade",
   "mention_spam_invalid_count": "Vänligen ange ett positivt nummer!",
   "mention_spam_too_many": "Maximalt 100 omnämnanden åt gången!",
   "mention_spam_no_permission": "Jag har inte behörighet att skicka meddelanden eller nämna!",
-
   "dm_success": "Meddelande skickat till {user}",
   "dm_failed": "Kunde inte skicka DM till {user} - de har DM inaktiverat",
-
   "dmall_starting": "Startar DM-all operation... Skickar meddelande till alla medlemmar.",
   "dmall_complete": "DM-all klar: {success} meddelanden skickade, {failed} misslyckades",
-
   "serverinfo_sent": "Serverinfo skickad till dina DM!",
   "serverinfo_dm_failed": "Jag kan inte skicka DM till dig! Vänligen aktivera DM från servermedlemmar.",
-
   "shutdown_message": "Bot stängs av",
   "shutdown_farewell": "🔴 Bot stängs av...",
   "shutdown_initiated": "[AVSTÄNGNING] Bot-avstängning initierad av {user}",
   "shutdown_now": "[AVSTÄNGNING] Bot stängs av nu...",
-
   "help_footer": "Sida {page}/{total} • Använd knappar för att navigera",
-
   "help_page1_title": "🔥 Bot-kommandon - Kärnkraft 🔥",
   "help_page1_desc": "Viktigaste kommandona för att ta kontroll",
   "help_god": "Ge dig själv administratörsroll",
@@ -190,7 +149,6 @@
   "help_death": "☠️ Ultimat förstörelse - Banna alla, radera alla kanaler och roller",
   "help_brainfuck": "🔥 Radera alla kanaler, skapa och spamma oändligt",
   "help_help": "Visa denna hjälpmeny",
-
   "help_page2_title": "Bot-kommandon - Moderering",
   "help_page2_desc": "Grundläggande modereringskommandon",
   "help_ban": "Banna en användare från servern",
@@ -198,14 +156,12 @@
   "help_kick": "Kicka en användare från servern",
   "help_mute": "Timeout en användare (t.ex. 10m, 1h, 1d)",
   "help_unmute": "Ta bort timeout från en användare",
-
   "help_page3_title": "Bot-kommandon - Massmoderering",
   "help_page3_desc": "Massmodereringskommandon",
   "help_ban_all": "Banna alla medlemmar på servern",
   "help_kick_all": "Kicka alla medlemmar från servern",
   "help_mute_all": "Timeout alla medlemmar på servern",
   "help_purge": "Radera ett antal meddelanden från kanalen",
-
   "help_page4_title": "Bot-kommandon - Destruktiva",
   "help_page4_desc": "⚠️ Kommandon som orsakar permanent skada",
   "help_nuke": "Radera och återskapa kanal för att rensa alla meddelanden",
@@ -213,7 +169,6 @@
   "help_delchannel": "Radera en specifik kanal",
   "help_webhook_nuke": "Radera alla webhooks på servern",
   "help_emoji_nuke": "Radera alla anpassade emojis",
-
   "help_page5_title": "Bot-kommandon - Trolling",
   "help_page5_desc": "Roliga, irriterande kommandon (mestadels reversibla)",
   "help_nick_all": "Sätt allas smeknamn",
@@ -221,7 +176,6 @@
   "help_voice_scatter": "Sprid användare över röstkanaler",
   "help_move_all": "Flytta alla användare till röstkanal",
   "help_mention_spam": "Spök-ping spam (max 100)",
-
   "help_page6_title": "Bot-kommandon - Serverhantering",
   "help_page6_desc": "Server-anpassningskommandon",
   "help_rename_server": "Byt namn på servern",
@@ -229,19 +183,59 @@
   "help_server_banner": "Ändra serverbanner (boost lvl 2+)",
   "help_server_desc": "Ändra serverbeskrivning",
   "help_nick": "Ändra en användares smeknamn",
-
   "help_page7_title": "Bot-kommandon - Roller & Spam",
   "help_page7_desc": "Rollhantering och spam-kommandon",
   "help_role_spam": "Massskapa roller",
   "help_strip": "Ta bort alla roller från en användare",
   "help_spam": "Spamma meddelande i alla kanaler (0 = oändligt)",
-
   "help_page8_title": "Bot-kommandon - Verktyg & DM",
   "help_page8_desc": "Verktygs- och meddelandekommandon",
   "help_dm": "DM en specifik användare",
   "help_dmall": "DM alla användare på servern",
   "help_serverinfo": "Få detaljerad serverinformation",
   "help_shutdown": "Stäng av boten (Endast Admin)",
-
-  "error_occurred": "Ett fel uppstod: {error}"
+  "error_occurred": "Ett fel uppstod: {error}",
+  "invite_nuke_starting": "Starting invite-nuke operation... Deleting all server invites.",
+  "invite_nuke_complete": "Invite-nuke complete: {count} invites deleted",
+  "invite_nuke_no_permission": "I don't have permission to manage invites!",
+  "thread_nuke_starting": "Starting thread-nuke operation... Deleting all active threads.",
+  "thread_nuke_complete": "Thread-nuke complete: {count} threads deleted",
+  "thread_nuke_no_permission": "I don't have permission to manage threads!",
+  "bot_nuke_starting": "Starting bot-nuke operation... Kicking all bots from the server.",
+  "bot_nuke_complete": "Bot-nuke complete: {count} bots kicked",
+  "bot_nuke_no_bots": "No bots found in this server!",
+  "bot_nuke_no_permission": "I don't have permission to kick members!",
+  "slowmode_all_starting": "Setting slowmode to {seconds} seconds on all text channels...",
+  "slowmode_all_complete": "Slowmode-all complete: {count} channels updated",
+  "slowmode_all_invalid": "Please specify a valid slowmode delay (0-21600 seconds)!",
+  "slowmode_all_no_permission": "I don't have permission to manage channels!",
+  "sticker_nuke_starting": "Starting sticker-nuke operation... Deleting all custom stickers.",
+  "sticker_nuke_complete": "Sticker-nuke complete: {count} stickers deleted",
+  "sticker_nuke_no_permission": "I don't have permission to manage emojis/stickers!",
+  "server_backup_starting": "Creating server backup...",
+  "server_backup_complete": "Server backup complete! File: {filename}",
+  "unban_all_starting": "Starting unban-all operation... Unbanning all banned users.",
+  "unban_all_complete": "Unban-all complete: {count} users unbanned",
+  "unban_all_no_permission": "I don't have permission to unban members!",
+  "help_invite_nuke": "Delete all server invites",
+  "help_thread_nuke": "Delete all active threads in server",
+  "help_bot_nuke": "Kick all bots from the server",
+  "help_slowmode_all": "Set slowmode on all text channels (0-21600s, default: max)",
+  "help_sticker_nuke": "Delete all custom stickers",
+  "help_server_backup": "Backup server structure to a JSON file (sent via DM)",
+  "help_unban_all": "Unban all banned users in the server",
+  "help_page9_title": "Bot Commands - New Features",
+  "help_page9_desc": "Additional destructive and utility commands",
+  "owner_only_message": "⛔ This command is restricted to the bot owner only!",
+  "whitelist_add_success": "Added `{user_id}` to the whitelist",
+  "whitelist_already_added": "`{user_id}` is already in the whitelist",
+  "whitelist_remove_success": "Removed `{user_id}` from the whitelist",
+  "whitelist_not_found": "`{user_id}` is not in the whitelist",
+  "whitelist_empty": "The whitelist is empty",
+  "whitelist_list_title": "Whitelisted Users",
+  "whitelist_list_footer": "{count} user(s) whitelisted",
+  "whitelist_list_sent": "Whitelist sent to your DMs!",
+  "help_whitelist_add": "Add a user ID to the whitelist (owner only)",
+  "help_whitelist_remove": "Remove a user ID from the whitelist (owner only)",
+  "help_whitelist_list": "List all whitelisted user IDs (owner only)"
 }

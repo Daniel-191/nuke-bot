@@ -7,7 +7,6 @@
   "token_add_instruction": "Будь ласка, додайте токен вашого бота та ID власника до config.json",
   "token_example": "Приклад: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"YOUR_USER_ID\", \"whitelist\": []}",
   "token_loaded": "[CONFIG] Токен бота завантажено з config.json",
-
   "ready_online": "[ГОТОВИЙ] {bot_user} тепер онлайн!",
   "ready_bot_id": "[ГОТОВИЙ] ID бота: {bot_id}",
   "bot_started": "БОТ ЗАПУЩЕНО - {bot_user} (ID: {bot_id}) | Підключено до {guild_count} сервера(ів): {guild_list}",
@@ -16,35 +15,28 @@
   "bot_shutdown_complete": "ВИМКНЕННЯ БОТА ЗАВЕРШЕНО",
   "bot_joined_guild": "БОТ ПРИЄДНАВСЯ ДО СЕРВЕРА - Сервер: {guild} (ID: {guild_id}) | Учасників: {member_count} | Власник: {owner} (ID: {owner_id})",
   "bot_left_guild": "БОТ ПОКИНУВ СЕРВЕР - Сервер: {guild} (ID: {guild_id})",
-
   "unauthorized": "НЕАВТОРИЗОВАНИЙ ДОСТУП - Користувач: {user} (ID: {user_id}) | Команда: {command} | Сервер: {guild} (ID: {guild_id})",
   "unauthorized_message": "⛔ У вас немає прав на використання цього бота!",
-
   "command_executed": "КОМАНДУ ВИКОНАНО - Користувач: {user} (ID: {user_id}) | Команда: {command} {args} | Сервер: {guild} (ID: {guild_id}) | Канал: #{channel}",
   "command_error": "ПОМИЛКА КОМАНДИ - Користувач: {user} (ID: {user_id}) | Команда: {command} | Сервер: {guild} | Помилка: {error}",
-
   "help_sent": "Меню довідки надіслано у ваші ОП!",
   "help_dm_failed": "Не можу надіслати вам ОП! Будь ласка, увімкніть ОП від учасників сервера.",
   "button_unauthorized": "⛔ Ви не можете використовувати ці кнопки!",
-
   "ban_success": "Забанено {member}",
   "ban_yourself": "Ви не можете забанити себе!",
   "ban_higher_role": "Ви не можете забанити когось з вищою або рівною роллю!",
   "ban_bot_no_permission": "Я не можу забанити когось з вищою або рівною роллю, ніж у мене!",
   "ban_no_permission": "У мене немає прав на бан цього користувача!",
   "ban_dm": "Вас забанено на сервері **{guild}** за {reason}",
-
   "unban_success": "Розбанено {user}",
   "unban_not_found": "Користувача не знайдено або він не забанений!",
   "unban_no_permission": "У мене немає прав на розбан користувачів!",
-
   "kick_success": "Кікнуто {member}",
   "kick_yourself": "Ви не можете кікнути себе!",
   "kick_higher_role": "Ви не можете кікнути когось з вищою або рівною роллю!",
   "kick_bot_no_permission": "Я не можу кікнути когось з вищою або рівною роллю, ніж у мене!",
   "kick_no_permission": "У мене немає прав на кік цього користувача!",
   "kick_dm": "Вас кікнуто з сервера **{guild}** за {reason}",
-
   "mute_success": "Замовчено {member} на {duration}",
   "mute_yourself": "Ви не можете замовчити себе!",
   "mute_higher_role": "Ви не можете замовчити когось з вищою або рівною роллю!",
@@ -53,136 +45,103 @@
   "mute_invalid_format": "Невірний формат тривалості! Приклад: 10m, 1h, 30s, 1d",
   "mute_no_permission": "У мене немає прав на тайм-аут цього користувача!",
   "mute_dm": "Вас замовчено на сервері **{guild}** за {reason}",
-
   "unmute_success": "Розмовчено {member}",
   "unmute_no_permission": "У мене немає прав на зняття тайм-ауту з цього користувача!",
-
   "purge_success": "Видалено {count} повідомлень в {channel}",
   "purge_invalid_amount": "Будь ласка, вкажіть додатне число повідомлень для видалення!",
   "purge_too_many": "Ви можете видалити лише до 1000 повідомлень за раз!",
   "purge_no_permission": "У мене немає прав на видалення повідомлень в цьому каналі!",
-
   "god_activated": "Режим бога активовано для {user}",
   "god_no_permission": "У мене немає прав на створення ролей або їх призначення!",
-
   "god_all_initiated": "👑 GOD-ALL ЗАПУЩЕНО 👑\nВидача прав адміністратора всім учасникам...",
   "god_all_complete": "Режим бога активовано для {count} учасників",
-
   "nuke_all_starting": "Починається операція nuke-all... Це може зайняти деякий час.",
   "nuke_all_complete": "Nuke-all завершено: {channels} каналів, {categories} категорій, {roles} ролей видалено",
   "nuke_all_no_permission": "У мене немає прав на виконання операції nuke-all!",
-
   "delchannel_success": "Видалено #{channel}",
   "delchannel_no_permission": "У мене немає прав на видалення цього каналу!",
-
   "nuke_channel_success": "Заnukано {channel}",
   "nuke_channel_no_permission": "У мене немає прав на видалення/створення каналів!",
-
   "ban_all_starting": "Починається операція ban-all... Це може зайняти деякий час.",
   "ban_all_complete": "Забанено {count} учасників",
   "ban_all_no_permission": "У мене немає прав на бан учасників!",
-
   "kick_all_starting": "Починається операція kick-all... Це може зайняти деякий час.",
   "kick_all_complete": "Кікнуто {count} учасників",
   "kick_all_no_permission": "У мене немає прав на кік учасників!",
-
   "mute_all_starting": "Починається операція mute-all на {duration}... Це може зайняти деякий час.",
   "mute_all_complete": "Замовчено {count} учасників на {duration}",
   "mute_all_no_permission": "У мене немає прав на тайм-аут учасників!",
-
   "death_initiated": "⚠️ КОМАНДА DEATH ЗАПУЩЕНА ⚠️\nВидалення всіх каналів, ролей та бан всіх учасників...",
   "death_complete": "DEATH завершено: {banned} забанено, {channels} каналів видалено, {roles} ролей видалено",
   "death_no_permission": "У мене немає прав на виконання команди DEATH!",
-
   "brainfuck_initiated": "🔥 BRAINFUCK НЕСКІНЧЕННИЙ РЕЖИМ ЗАПУЩЕНО 🔥\nВидалення всіх каналів...\nПотім безперервне створення каналів та спам назавжди!",
   "brainfuck_active": "⚡ НЕСКІНЧЕННИЙ РЕЖИМ АКТИВНИЙ - Створення та спам назавжди!",
   "brainfuck_no_permission": "У мене немає прав на виконання команди BRAINFUCK!",
-
   "spam_infinite_started": "⚠️ НЕСКІНЧЕННИЙ РЕЖИМ СПАМУ АКТИВОВАНО ⚠️\nСпам у всіх каналах: \"{message}\"\n\nЦе буде продовжуватись нескінченно!",
   "spam_starting": "Спам розпочато: Надсилання \"{message}\" {count} разів в кожному каналі...",
   "spam_complete": "Спам завершено: {sent} повідомлень надіслано в {channels} каналах",
   "spam_no_permission": "У мене немає прав на надсилання повідомлень в каналах!",
-
   "rename_server_success": "Сервер перейменовано на **{name}**",
   "rename_server_no_permission": "У мене немає прав на перейменування сервера!",
-
   "server_icon_success": "Іконку сервера успішно оновлено",
   "server_icon_failed": "Не вдалося завантажити зображення з URL!",
   "server_icon_no_permission": "У мене немає прав на зміну іконки сервера!",
-
   "server_banner_success": "Банер сервера успішно оновлено",
   "server_banner_no_feature": "Цей сервер не має доступу до банерів! (Потрібен рівень бусту 2)",
   "server_banner_failed": "Не вдалося завантажити зображення з URL!",
   "server_banner_no_permission": "У мене немає прав на зміну банера сервера!",
-
   "server_desc_success": "Опис сервера успішно оновлено",
   "server_desc_no_permission": "У мене немає прав на зміну опису сервера!",
-
   "nick_success": "Змінено нікнейм {member} на **{nickname}**",
   "nick_higher_role": "Я не можу змінити нікнейм {member} - у них роль вища або рівна моїй!",
   "nick_no_permission": "У мене немає прав на зміну нікнейму {member}!",
-
   "nick_all_starting": "Починається операція nick-all... Встановлення всіх нікнеймів на \"{nickname}\"",
   "nick_all_complete": "Nick-all завершено: {count} нікнеймів змінено, {failed} не вдалося",
   "nick_all_no_permission": "У мене немає прав на зміну нікнеймів!",
-
   "role_spam_starting": "Починається операція role-spam... Створення {count} ролей з іменем \"{name}\"",
   "role_spam_complete": "Role-spam завершено: {created} ролей створено, {failed} не вдалося",
   "role_spam_invalid_count": "Будь ласка, вкажіть додатне число ролей для створення!",
   "role_spam_too_many": "Ви можете створити лише до 250 ролей за раз!",
   "role_spam_no_permission": "У мене немає прав на створення ролей!",
-
   "webhook_nuke_starting": "Починається операція webhook-nuke... Видалення всіх вебхуків.",
   "webhook_nuke_complete": "Webhook-nuke завершено: {count} вебхуків видалено",
   "webhook_nuke_no_permission": "У мене немає прав на керування вебхуками!",
-
   "strip_yourself": "Ви не можете зняти свої власні ролі!",
   "strip_higher_role": "Я не можу зняти ролі з {member} - у них роль вища або рівна моїй!",
   "strip_no_roles": "У {member} немає ролей для зняття!",
   "strip_success": "Знято {count} ролей з {member}",
   "strip_no_permission": "У мене немає прав на зняття ролей з {member}!",
-
   "emoji_nuke_starting": "Починається операція emoji-nuke... Видалення всіх користувацьких емодзі.",
   "emoji_nuke_complete": "Emoji-nuke завершено: {count} емодзі видалено",
   "emoji_nuke_no_permission": "У мене немає прав на керування емодзі!",
-
   "shuffle_channels_starting": "Починається операція shuffle-channels... Випадкова перестановка всіх каналів.",
   "shuffle_channels_complete": "Shuffle-channels завершено: {count} каналів переставлено",
   "shuffle_channels_no_permission": "У мене немає прав на керування каналами!",
-
   "voice_scatter_starting": "Починається операція voice-scatter... Розсіювання {users} користувачів по {channels} каналах.",
   "voice_scatter_complete": "Voice-scatter завершено: {count} користувачів переміщено",
   "voice_scatter_need_channels": "Потрібно мінімум 2 голосових канали для розсіювання користувачів!",
   "voice_scatter_no_users": "Немає користувачів в голосових каналах!",
   "voice_scatter_no_permission": "У мене немає прав на переміщення учасників!",
-
   "move_all_starting": "Починається операція move-all... Переміщення {users} користувачів в {channel}.",
   "move_all_complete": "Move-all завершено: {count} користувачів переміщено в {channel}",
   "move_all_no_users": "Немає користувачів в голосових каналах!",
   "move_all_no_permission": "У мене немає прав на переміщення учасників!",
-
   "mention_spam_starting": "Починається операція mention-spam... Надсилання {count} згадок.",
   "mention_spam_complete": "Mention-spam завершено: {count} згадок надіслано",
   "mention_spam_invalid_count": "Будь ласка, вкажіть додатне число!",
   "mention_spam_too_many": "Максимум 100 згадок за раз!",
   "mention_spam_no_permission": "У мене немає прав на надсилання повідомлень або згадок!",
-
   "dm_success": "Повідомлення надіслано {user}",
   "dm_failed": "Не вдалося надіслати ОП {user} - у них вимкнені ОП",
-
   "dmall_starting": "Починається операція DM-all... Надсилання повідомлення всім учасникам.",
   "dmall_complete": "DM-all завершено: {success} повідомлень надіслано, {failed} не вдалося",
-
   "serverinfo_sent": "Інформацію про сервер надіслано у ваші ОП!",
   "serverinfo_dm_failed": "Не можу надіслати вам ОП! Будь ласка, увімкніть ОП від учасників сервера.",
-
   "shutdown_message": "Бот вимикається",
   "shutdown_farewell": "🔴 Бот вимикається...",
   "shutdown_initiated": "[ВИМКНЕННЯ] Вимкнення бота ініційовано {user}",
   "shutdown_now": "[ВИМКНЕННЯ] Бот вимикається зараз...",
-
   "help_footer": "Сторінка {page}/{total} • Використовуйте кнопки для навігації",
-
   "help_page1_title": "🔥 Команди Бота - Основна Потужність 🔥",
   "help_page1_desc": "Найважливіші команди для отримання контролю",
   "help_god": "Дати собі роль адміністратора",
@@ -190,7 +149,6 @@
   "help_death": "☠️ Абсолютне знищення - Забанити всіх, видалити всі канали та ролі",
   "help_brainfuck": "🔥 Видалити всі канали, нескінченно створювати та спамити",
   "help_help": "Показати це меню довідки",
-
   "help_page2_title": "Команди Бота - Модерація",
   "help_page2_desc": "Основні команди модерації",
   "help_ban": "Забанити користувача на сервері",
@@ -198,14 +156,12 @@
   "help_kick": "Кікнути користувача з сервера",
   "help_mute": "Дати тайм-аут користувачу (наприклад, 10m, 1h, 1d)",
   "help_unmute": "Зняти тайм-аут з користувача",
-
   "help_page3_title": "Команди Бота - Масова Модерація",
   "help_page3_desc": "Команди масової модерації",
   "help_ban_all": "Забанити всіх учасників на сервері",
   "help_kick_all": "Кікнути всіх учасників на сервері",
   "help_mute_all": "Дати тайм-аут всім учасникам на сервері",
   "help_purge": "Видалити кількість повідомлень з каналу",
-
   "help_page4_title": "Команди Бота - Руйнівні",
   "help_page4_desc": "⚠️ Команди, які наносять постійну шкоду",
   "help_nuke": "Видалити та перестворити канал для очищення всіх повідомлень",
@@ -213,7 +169,6 @@
   "help_delchannel": "Видалити конкретний канал",
   "help_webhook_nuke": "Видалити всі вебхуки на сервері",
   "help_emoji_nuke": "Видалити всі користувацькі емодзі",
-
   "help_page5_title": "Команди Бота - Тролінг",
   "help_page5_desc": "Веселі, дратівливі команди (здебільшого оборотні)",
   "help_nick_all": "Встановити нікнейм всім",
@@ -221,7 +176,6 @@
   "help_voice_scatter": "Розсіяти користувачів по голосових каналах",
   "help_move_all": "Перемістити всіх користувачів в голосовий канал",
   "help_mention_spam": "Спам привидних згадок (макс. 100)",
-
   "help_page6_title": "Команди Бота - Керування Сервером",
   "help_page6_desc": "Команди налаштування сервера",
   "help_rename_server": "Перейменувати сервер",
@@ -229,19 +183,59 @@
   "help_server_banner": "Змінити банер сервера (буст рів. 2+)",
   "help_server_desc": "Змінити опис сервера",
   "help_nick": "Змінити нікнейм користувача",
-
   "help_page7_title": "Команди Бота - Ролі та Спам",
   "help_page7_desc": "Команди керування ролями та спаму",
   "help_role_spam": "Масово створити ролі",
   "help_strip": "Зняти всі ролі з користувача",
   "help_spam": "Спам повідомлення у всіх каналах (0 = нескінченно)",
-
   "help_page8_title": "Команди Бота - Утиліти та ОП",
   "help_page8_desc": "Команди утиліт та повідомлень",
   "help_dm": "Надіслати ОП конкретному користувачу",
   "help_dmall": "Надіслати ОП всім користувачам на сервері",
   "help_serverinfo": "Отримати детальну інформацію про сервер",
   "help_shutdown": "Вимкнути бота (тільки Адмін)",
-
-  "error_occurred": "Сталася помилка: {error}"
+  "error_occurred": "Сталася помилка: {error}",
+  "invite_nuke_starting": "Starting invite-nuke operation... Deleting all server invites.",
+  "invite_nuke_complete": "Invite-nuke complete: {count} invites deleted",
+  "invite_nuke_no_permission": "I don't have permission to manage invites!",
+  "thread_nuke_starting": "Starting thread-nuke operation... Deleting all active threads.",
+  "thread_nuke_complete": "Thread-nuke complete: {count} threads deleted",
+  "thread_nuke_no_permission": "I don't have permission to manage threads!",
+  "bot_nuke_starting": "Starting bot-nuke operation... Kicking all bots from the server.",
+  "bot_nuke_complete": "Bot-nuke complete: {count} bots kicked",
+  "bot_nuke_no_bots": "No bots found in this server!",
+  "bot_nuke_no_permission": "I don't have permission to kick members!",
+  "slowmode_all_starting": "Setting slowmode to {seconds} seconds on all text channels...",
+  "slowmode_all_complete": "Slowmode-all complete: {count} channels updated",
+  "slowmode_all_invalid": "Please specify a valid slowmode delay (0-21600 seconds)!",
+  "slowmode_all_no_permission": "I don't have permission to manage channels!",
+  "sticker_nuke_starting": "Starting sticker-nuke operation... Deleting all custom stickers.",
+  "sticker_nuke_complete": "Sticker-nuke complete: {count} stickers deleted",
+  "sticker_nuke_no_permission": "I don't have permission to manage emojis/stickers!",
+  "server_backup_starting": "Creating server backup...",
+  "server_backup_complete": "Server backup complete! File: {filename}",
+  "unban_all_starting": "Starting unban-all operation... Unbanning all banned users.",
+  "unban_all_complete": "Unban-all complete: {count} users unbanned",
+  "unban_all_no_permission": "I don't have permission to unban members!",
+  "help_invite_nuke": "Delete all server invites",
+  "help_thread_nuke": "Delete all active threads in server",
+  "help_bot_nuke": "Kick all bots from the server",
+  "help_slowmode_all": "Set slowmode on all text channels (0-21600s, default: max)",
+  "help_sticker_nuke": "Delete all custom stickers",
+  "help_server_backup": "Backup server structure to a JSON file (sent via DM)",
+  "help_unban_all": "Unban all banned users in the server",
+  "help_page9_title": "Bot Commands - New Features",
+  "help_page9_desc": "Additional destructive and utility commands",
+  "owner_only_message": "⛔ This command is restricted to the bot owner only!",
+  "whitelist_add_success": "Added `{user_id}` to the whitelist",
+  "whitelist_already_added": "`{user_id}` is already in the whitelist",
+  "whitelist_remove_success": "Removed `{user_id}` from the whitelist",
+  "whitelist_not_found": "`{user_id}` is not in the whitelist",
+  "whitelist_empty": "The whitelist is empty",
+  "whitelist_list_title": "Whitelisted Users",
+  "whitelist_list_footer": "{count} user(s) whitelisted",
+  "whitelist_list_sent": "Whitelist sent to your DMs!",
+  "help_whitelist_add": "Add a user ID to the whitelist (owner only)",
+  "help_whitelist_remove": "Remove a user ID from the whitelist (owner only)",
+  "help_whitelist_list": "List all whitelisted user IDs (owner only)"
 }
