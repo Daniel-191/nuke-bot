@@ -2731,18 +2731,21 @@ if __name__ == "__main__":
     else:
         print(f'{Fore.CYAN}{t("token_loaded")}{Style.RESET_ALL}')
 
-        proxies = load_proxies()
-        if proxies:
-            try:
-                from aiohttp_socks import ProxyConnector
-                selected_proxy = random.choice(proxies)
-                bot.http.connector = ProxyConnector.from_url(selected_proxy)
-                print(f'{Fore.CYAN}[PROXY] {Fore.WHITE}Using proxy: {selected_proxy} ({len(proxies)} total loaded){Style.RESET_ALL}')
-                logger.info(f"Proxy enabled: {selected_proxy} ({len(proxies)} proxies loaded)")
-            except ImportError:
-                print(f'{Fore.YELLOW}[PROXY] aiohttp_socks is not installed — proxies disabled. Run: pip install aiohttp_socks{Style.RESET_ALL}')
-                logger.warning("aiohttp_socks not installed, proxies disabled")
+        if config.get("proxies", False):
+            proxies = load_proxies()
+            if proxies:
+                try:
+                    from aiohttp_socks import ProxyConnector
+                    selected_proxy = random.choice(proxies)
+                    bot.http.connector = ProxyConnector.from_url(selected_proxy)
+                    print(f'{Fore.CYAN}[PROXY] {Fore.WHITE}Using proxy: {selected_proxy} ({len(proxies)} total loaded){Style.RESET_ALL}')
+                    logger.info(f"Proxy enabled: {selected_proxy} ({len(proxies)} proxies loaded)")
+                except ImportError:
+                    print(f'{Fore.YELLOW}[PROXY] aiohttp_socks is not installed — proxies disabled. Run: pip install aiohttp_socks{Style.RESET_ALL}')
+                    logger.warning("aiohttp_socks not installed, proxies disabled")
+            else:
+                print(f'{Fore.YELLOW}[PROXY] Proxies enabled in config but no proxies found in socks4.txt / socks5.txt{Style.RESET_ALL}')
         else:
-            print(f'{Fore.YELLOW}[PROXY] No proxy files found (socks4.txt / socks5.txt) — running without proxy{Style.RESET_ALL}')
+            print(f'{Fore.CYAN}[PROXY] {Fore.WHITE}Proxies disabled — set "proxies": true in config.json to enable{Style.RESET_ALL}')
 
         bot.run(token)

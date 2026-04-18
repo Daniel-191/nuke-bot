@@ -127,7 +127,8 @@ Edit `config.json` and configure your bot settings:
   "prefix": ".!",
   "owner_id": "YOUR_USER_ID_HERE",
   "whitelist": [],
-  "language": "en"
+  "language": "en",
+  "proxies": false
 }
 ```
 
@@ -139,6 +140,7 @@ Edit `config.json` and configure your bot settings:
   - Example: `"whitelist": [123456789012345678, 987654321098765432]`
   - Only the owner and whitelisted users can use bot commands
   - Leave empty `[]` to only allow the owner
+- **`proxies`** (optional, default: `false`): Enable SOCKS proxy support. Set to `true` to load proxies from `socks4.txt` and `socks5.txt` — one `host:port` per line. A random proxy is picked on each startup.
 - **`language`** (optional, default: `"en"`): Bot language for messages and responses
   - Available languages:
     - `"en"` - English
