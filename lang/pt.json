@@ -7,7 +7,6 @@
   "token_add_instruction": "Por favor, adicione seu token do bot e ID do proprietário ao config.json",
   "token_example": "Exemplo: {\"token\": \"BOT_TOKEN\", \"prefix\": \".!\", \"owner_id\": \"SEU_ID_DE_USUARIO\", \"whitelist\": []}",
   "token_loaded": "[CONFIG] Token do bot carregado de config.json",
-
   "ready_online": "[PRONTO] {bot_user} está online agora!",
   "ready_bot_id": "[PRONTO] ID do Bot: {bot_id}",
   "bot_started": "BOT INICIADO - {bot_user} (ID: {bot_id}) | Conectado a {guild_count} servidor(es): {guild_list}",
@@ -16,35 +15,28 @@
   "bot_shutdown_complete": "DESLIGAMENTO DO BOT CONCLUÍDO",
   "bot_joined_guild": "BOT ENTROU NO SERVIDOR - Servidor: {guild} (ID: {guild_id}) | Membros: {member_count} | Proprietário: {owner} (ID: {owner_id})",
   "bot_left_guild": "BOT SAIU DO SERVIDOR - Servidor: {guild} (ID: {guild_id})",
-
   "unauthorized": "ACESSO NÃO AUTORIZADO - Usuário: {user} (ID: {user_id}) | Comando: {command} | Servidor: {guild} (ID: {guild_id})",
   "unauthorized_message": "⛔ Você não está autorizado a usar este bot!",
-
   "command_executed": "COMANDO EXECUTADO - Usuário: {user} (ID: {user_id}) | Comando: {command} {args} | Servidor: {guild} (ID: {guild_id}) | Canal: #{channel}",
   "command_error": "ERRO DE COMANDO - Usuário: {user} (ID: {user_id}) | Comando: {command} | Servidor: {guild} | Erro: {error}",
-
   "help_sent": "Menu de ajuda enviado para sua DM!",
   "help_dm_failed": "Não consegui enviar DM para você! Por favor, habilite DMs de membros do servidor.",
   "button_unauthorized": "⛔ Você não pode usar esses botões!",
-
   "ban_success": "Banido {member}",
   "ban_yourself": "Você não pode banir a si mesmo!",
   "ban_higher_role": "Você não pode banir alguém com um cargo superior ou igual!",
   "ban_bot_no_permission": "Não posso banir alguém com um cargo superior ou igual ao meu!",
   "ban_no_permission": "Não tenho permissão para banir este usuário!",
   "ban_dm": "Você foi banido de **{guild}** por {reason}",
-
   "unban_success": "Desbanido {user}",
   "unban_not_found": "Usuário não encontrado ou não está banido!",
   "unban_no_permission": "Não tenho permissão para desbanir usuários!",
-
   "kick_success": "Expulso {member}",
   "kick_yourself": "Você não pode expulsar a si mesmo!",
   "kick_higher_role": "Você não pode expulsar alguém com um cargo superior ou igual!",
   "kick_bot_no_permission": "Não posso expulsar alguém com um cargo superior ou igual ao meu!",
   "kick_no_permission": "Não tenho permissão para expulsar este usuário!",
   "kick_dm": "Você foi expulso de **{guild}** por {reason}",
-
   "mute_success": "Silenciado {member} por {duration}",
   "mute_yourself": "Você não pode silenciar a si mesmo!",
   "mute_higher_role": "Você não pode silenciar alguém com um cargo superior ou igual!",
@@ -53,136 +45,103 @@
   "mute_invalid_format": "Formato de duração inválido! Exemplo: 10m, 1h, 30s, 1d",
   "mute_no_permission": "Não tenho permissão para silenciar este usuário!",
   "mute_dm": "Você foi silenciado em **{guild}** por {reason}",
-
   "unmute_success": "Dessilenciado {member}",
   "unmute_no_permission": "Não tenho permissão para remover o silenciamento deste usuário!",
-
   "purge_success": "Purgados {count} mensagens em {channel}",
   "purge_invalid_amount": "Por favor, especifique um número positivo de mensagens para purgar!",
   "purge_too_many": "Você só pode purgar até 1000 mensagens por vez!",
   "purge_no_permission": "Não tenho permissão para deletar mensagens neste canal!",
-
   "god_activated": "Modo deus ativado para {user}",
   "god_no_permission": "Não tenho permissão para criar cargos ou atribuí-los!",
-
   "god_all_initiated": "👑 MODO DEUS PARA TODOS INICIADO 👑\nDando permissões de administrador a todos os membros...",
   "god_all_complete": "Modo deus ativado para {count} membros",
-
   "nuke_all_starting": "Iniciando operação nuke-all... Isso pode demorar um pouco.",
   "nuke_all_complete": "Nuke-all concluído: {channels} canais, {categories} categorias, {roles} cargos deletados",
   "nuke_all_no_permission": "Não tenho permissão para realizar a operação nuke-all!",
-
   "delchannel_success": "Deletado #{channel}",
   "delchannel_no_permission": "Não tenho permissão para deletar esse canal!",
-
   "nuke_channel_success": "Nukeado {channel}",
   "nuke_channel_no_permission": "Não tenho permissão para deletar/criar canais!",
-
   "ban_all_starting": "Iniciando operação ban-all... Isso pode demorar um pouco.",
   "ban_all_complete": "Banidos {count} membros",
   "ban_all_no_permission": "Não tenho permissão para banir membros!",
-
   "kick_all_starting": "Iniciando operação kick-all... Isso pode demorar um pouco.",
   "kick_all_complete": "Expulsos {count} membros",
   "kick_all_no_permission": "Não tenho permissão para expulsar membros!",
-
   "mute_all_starting": "Iniciando operação mute-all por {duration}... Isso pode demorar um pouco.",
   "mute_all_complete": "Silenciados {count} membros por {duration}",
   "mute_all_no_permission": "Não tenho permissão para silenciar membros!",
-
   "death_initiated": "⚠️ COMANDO DEATH INICIADO ⚠️\nDeletando todos os canais, cargos e banindo todos os membros...",
   "death_complete": "DEATH concluído: {banned} banidos, {channels} canais deletados, {roles} cargos deletados",
   "death_no_permission": "Não tenho permissão para executar o comando DEATH!",
-
   "brainfuck_initiated": "🔥 MODO INFINITO BRAINFUCK INICIADO 🔥\nDeletando todos os canais...\nDepois criando canais continuamente e spamando para sempre!",
   "brainfuck_active": "⚡ MODO INFINITO ATIVO - Criando e spamando para sempre!",
   "brainfuck_no_permission": "Não tenho permissão para executar o comando BRAINFUCK!",
-
   "spam_infinite_started": "⚠️ MODO SPAM INFINITO ATIVADO ⚠️\nSpamando em todos os canais: \"{message}\"\n\nIsso continuará indefinidamente!",
   "spam_starting": "Spam iniciado: Enviando \"{message}\" {count} vezes em cada canal...",
   "spam_complete": "Spam concluído: {sent} mensagens enviadas em {channels} canais",
   "spam_no_permission": "Não tenho permissão para enviar mensagens em canais!",
-
   "rename_server_success": "Servidor renomeado para **{name}**",
   "rename_server_no_permission": "Não tenho permissão para renomear o servidor!",
-
   "server_icon_success": "Ícone do servidor atualizado com sucesso",
   "server_icon_failed": "Falha ao baixar a imagem da URL!",
   "server_icon_no_permission": "Não tenho permissão para mudar o ícone do servidor!",
-
   "server_banner_success": "Banner do servidor atualizado com sucesso",
   "server_banner_no_feature": "Este servidor não tem acesso a banners! (Requer nível de boost 2)",
   "server_banner_failed": "Falha ao baixar a imagem da URL!",
   "server_banner_no_permission": "Não tenho permissão para mudar o banner do servidor!",
-
   "server_desc_success": "Descrição do servidor atualizada com sucesso",
   "server_desc_no_permission": "Não tenho permissão para mudar a descrição do servidor!",
-
   "nick_success": "Alterado o apelido de {member} para **{nickname}**",
   "nick_higher_role": "Não posso alterar o apelido de {member} - eles têm um cargo superior ou igual ao meu!",
   "nick_no_permission": "Não tenho permissão para alterar o apelido de {member}!",
-
   "nick_all_starting": "Iniciando operação nick-all... Definindo todos os apelidos para \"{nickname}\"",
   "nick_all_complete": "Nick-all concluído: {count} apelidos alterados, {failed} falharam",
   "nick_all_no_permission": "Não tenho permissão para alterar apelidos!",
-
   "role_spam_starting": "Iniciando operação role-spam... Criando {count} cargos chamados \"{name}\"",
   "role_spam_complete": "Role-spam concluído: {created} cargos criados, {failed} falharam",
   "role_spam_invalid_count": "Por favor, especifique um número positivo de cargos para criar!",
   "role_spam_too_many": "Você só pode criar até 250 cargos por vez!",
   "role_spam_no_permission": "Não tenho permissão para criar cargos!",
-
   "webhook_nuke_starting": "Iniciando operação webhook-nuke... Deletando todos os webhooks.",
   "webhook_nuke_complete": "Webhook-nuke concluído: {count} webhooks deletados",
   "webhook_nuke_no_permission": "Não tenho permissão para gerenciar webhooks!",
-
   "strip_yourself": "Você não pode remover seus próprios cargos!",
   "strip_higher_role": "Não posso remover cargos de {member} - eles têm um cargo superior ou igual ao meu!",
   "strip_no_roles": "{member} não tem cargos removíveis!",
   "strip_success": "Removidos {count} cargos de {member}",
   "strip_no_permission": "Não tenho permissão para remover cargos de {member}!",
-
   "emoji_nuke_starting": "Iniciando operação emoji-nuke... Deletando todos os emojis personalizados.",
   "emoji_nuke_complete": "Emoji-nuke concluído: {count} emojis deletados",
   "emoji_nuke_no_permission": "Não tenho permissão para gerenciar emojis!",
-
   "shuffle_channels_starting": "Iniciando operação shuffle-channels... Reordenando todos os canais aleatoriamente.",
   "shuffle_channels_complete": "Shuffle-channels concluído: {count} canais reordenados",
   "shuffle_channels_no_permission": "Não tenho permissão para gerenciar canais!",
-
   "voice_scatter_starting": "Iniciando operação voice-scatter... Espalhando {users} usuários em {channels} canais.",
   "voice_scatter_complete": "Voice-scatter concluído: {count} usuários movidos",
   "voice_scatter_need_channels": "Preciso de pelo menos 2 canais de voz para espalhar usuários!",
   "voice_scatter_no_users": "Nenhum usuário em canais de voz!",
   "voice_scatter_no_permission": "Não tenho permissão para mover membros!",
-
   "move_all_starting": "Iniciando operação move-all... Movendo {users} usuários para {channel}.",
   "move_all_complete": "Move-all concluído: {count} usuários movidos para {channel}",
   "move_all_no_users": "Nenhum usuário em canais de voz!",
   "move_all_no_permission": "Não tenho permissão para mover membros!",
-
   "mention_spam_starting": "Iniciando operação mention-spam... Enviando {count} menções.",
   "mention_spam_complete": "Mention-spam concluído: {count} menções enviadas",
   "mention_spam_invalid_count": "Por favor, especifique um número positivo!",
   "mention_spam_too_many": "Máximo de 100 menções por vez!",
   "mention_spam_no_permission": "Não tenho permissão para enviar mensagens ou mencionar!",
-
   "dm_success": "Mensagem enviada para {user}",
   "dm_failed": "Não foi possível enviar DM para {user} - eles têm DMs desativadas",
-
   "dmall_starting": "Iniciando operação DM-all... Enviando mensagem para todos os membros.",
   "dmall_complete": "DM-all concluído: {success} mensagens enviadas, {failed} falharam",
-
   "serverinfo_sent": "Informações do servidor enviadas para sua DM!",
   "serverinfo_dm_failed": "Não consegui enviar DM para você! Por favor, habilite DMs de membros do servidor.",
-
   "shutdown_message": "Bot desligando",
   "shutdown_farewell": "🔴 Bot desligando...",
   "shutdown_initiated": "[DESLIGAMENTO] Desligamento do bot iniciado por {user}",
   "shutdown_now": "[DESLIGAMENTO] O bot está desligando agora...",
-
   "help_footer": "Página {page}/{total} • Use os botões para navegar",
-
   "help_page1_title": "🔥 Comandos do Bot - Poder Principal 🔥",
   "help_page1_desc": "Comandos mais importantes para assumir o controle",
   "help_god": "Dar a si mesmo o cargo de administrador",
@@ -190,7 +149,6 @@
   "help_death": "☠️ Destruição total - Banir todos, deletar todos os canais e cargos",
   "help_brainfuck": "🔥 Deletar todos os canais, criar e spamar infinitamente",
   "help_help": "Mostrar esta mensagem de ajuda",
-
   "help_page2_title": "Comandos do Bot - Moderação",
   "help_page2_desc": "Comandos básicos de moderação",
   "help_ban": "Banir um usuário do servidor",
@@ -198,14 +156,12 @@
   "help_kick": "Expulsar um usuário do servidor",
   "help_mute": "Silenciar um usuário (ex: 10m, 1h, 1d)",
   "help_unmute": "Remover o silenciamento de um usuário",
-
   "help_page3_title": "Comandos do Bot - Moderação em Massa",
   "help_page3_desc": "Comandos de moderação em massa",
   "help_ban_all": "Banir todos os membros do servidor",
   "help_kick_all": "Expulsar todos os membros do servidor",
   "help_mute_all": "Silenciar todos os membros do servidor",
   "help_purge": "Deletar um número de mensagens do canal",
-
   "help_page4_title": "Comandos do Bot - Destrutivos",
   "help_page4_desc": "⚠️ Comandos que causam dano permanente",
   "help_nuke": "Deletar e recriar canal para limpar todas as mensagens",
@@ -213,7 +169,6 @@
   "help_delchannel": "Deletar um canal específico",
   "help_webhook_nuke": "Deletar todos os webhooks do servidor",
   "help_emoji_nuke": "Deletar todos os emojis personalizados",
-
   "help_page5_title": "Comandos do Bot - Trollagem",
   "help_page5_desc": "Comandos divertidos e irritantes (maiormente reversíveis)",
   "help_nick_all": "Definir o apelido de todos",
@@ -221,7 +176,6 @@
   "help_voice_scatter": "Espalhar usuários pelos canais de voz",
   "help_move_all": "Mover todos os usuários para um canal de voz",
   "help_mention_spam": "Spam de menção fantasma (máx 100)",
-
   "help_page6_title": "Comandos do Bot - Gerenciamento do Servidor",
   "help_page6_desc": "Comandos de personalização do servidor",
   "help_rename_server": "Renomear o servidor",
@@ -229,19 +183,47 @@
   "help_server_banner": "Mudar o banner do servidor (nível boost 2+)",
   "help_server_desc": "Mudar a descrição do servidor",
   "help_nick": "Mudar o apelido de um usuário",
-
   "help_page7_title": "Comandos do Bot - Cargos e Spam",
   "help_page7_desc": "Comandos de gerenciamento de cargos e spam",
   "help_role_spam": "Criar cargos em massa",
   "help_strip": "Remover todos os cargos de um usuário",
   "help_spam": "Spamar mensagem em todos os canais (0 = infinito)",
-
   "help_page8_title": "Comandos do Bot - Utilitários e DM",
   "help_page8_desc": "Comandos utilitários e de mensagens",
   "help_dm": "Enviar DM para um usuário específico",
   "help_dmall": "Enviar DM para todos os usuários do servidor",
   "help_serverinfo": "Obter informações detalhadas do servidor",
   "help_shutdown": "Desligar o bot (Somente administrador)",
-
-  "error_occurred": "Ocorreu um erro: {error}"
+  "error_occurred": "Ocorreu um erro: {error}",
+  "invite_nuke_starting": "Starting invite-nuke operation... Deleting all server invites.",
+  "invite_nuke_complete": "Invite-nuke complete: {count} invites deleted",
+  "invite_nuke_no_permission": "I don't have permission to manage invites!",
+  "thread_nuke_starting": "Starting thread-nuke operation... Deleting all active threads.",
+  "thread_nuke_complete": "Thread-nuke complete: {count} threads deleted",
+  "thread_nuke_no_permission": "I don't have permission to manage threads!",
+  "bot_nuke_starting": "Starting bot-nuke operation... Kicking all bots from the server.",
+  "bot_nuke_complete": "Bot-nuke complete: {count} bots kicked",
+  "bot_nuke_no_bots": "No bots found in this server!",
+  "bot_nuke_no_permission": "I don't have permission to kick members!",
+  "slowmode_all_starting": "Setting slowmode to {seconds} seconds on all text channels...",
+  "slowmode_all_complete": "Slowmode-all complete: {count} channels updated",
+  "slowmode_all_invalid": "Please specify a valid slowmode delay (0-21600 seconds)!",
+  "slowmode_all_no_permission": "I don't have permission to manage channels!",
+  "sticker_nuke_starting": "Starting sticker-nuke operation... Deleting all custom stickers.",
+  "sticker_nuke_complete": "Sticker-nuke complete: {count} stickers deleted",
+  "sticker_nuke_no_permission": "I don't have permission to manage emojis/stickers!",
+  "server_backup_starting": "Creating server backup...",
+  "server_backup_complete": "Server backup complete! File: {filename}",
+  "unban_all_starting": "Starting unban-all operation... Unbanning all banned users.",
+  "unban_all_complete": "Unban-all complete: {count} users unbanned",
+  "unban_all_no_permission": "I don't have permission to unban members!",
+  "help_invite_nuke": "Delete all server invites",
+  "help_thread_nuke": "Delete all active threads in server",
+  "help_bot_nuke": "Kick all bots from the server",
+  "help_slowmode_all": "Set slowmode on all text channels (0-21600s, default: max)",
+  "help_sticker_nuke": "Delete all custom stickers",
+  "help_server_backup": "Backup server structure to a JSON file (sent via DM)",
+  "help_unban_all": "Unban all banned users in the server",
+  "help_page9_title": "Bot Commands - New Features",
+  "help_page9_desc": "Additional destructive and utility commands"
 }

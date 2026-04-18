@@ -49,15 +49,22 @@
  - [x] Users in Voice channels control (Move All, Scatter)
  - [x] Webhook Management (Nuke All Webhooks)
  - [x] Emoji Management (Nuke All Emojis)
+ - [x] Sticker Management (Nuke All Stickers)
+ - [x] Invite Management (Nuke All Invites)
+ - [x] Thread Management (Nuke All Threads)
+ - [x] Bot Management (Kick All Bots)
  - [x] Channel Shuffle (Random Reorder)
  - [x] Ghost Ping / Mention Spam
+ - [x] Slowmode Control (Set All Channels)
+ - [x] Server Backup (Export structure to JSON)
+ - [x] Unban All Members
 
 ## Soon
 
 - [x] Multi Lang support
+- [x] Clone/Backup server
 - [ ] Control/Nuke from console
 - [ ] Webpage interface
-- [ ] Clone/Backup server
 - [ ] Proxies
 
 ***
