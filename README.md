@@ -5,7 +5,7 @@
 <p align="center">
   <b>Advanced Discord Nuke Bot</b><br>
   Python 3.10+ • py-cord 2.6.0+
-</p> 
+</p>
 
 <p align="center">
   <a href="#"><img src="https://img.shields.io/badge/contributors-1-brightgreen"></a>
