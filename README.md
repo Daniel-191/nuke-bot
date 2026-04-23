@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <i>A simple yet powerfull discord nuke bot.</i>
+  <i>A simple yet powerful discord nuke bot.</i>
 </p>
 
 ---
