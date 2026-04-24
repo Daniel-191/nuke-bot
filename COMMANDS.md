@@ -28,6 +28,7 @@
 - `.!ban-all [reason]` - Ban all members in the server (except bots and command author)
 - `.!kick-all [reason]` - Kick all members from the server (except bots and command author)
 - `.!mute-all [duration] [reason]` - Timeout all members in the server for a specified duration
+- `.!unban-all` - Unban all banned users in the server
 
 ## Trolling Commands
 *Fun, annoying commands that mess with the server (mostly reversible)*
@@ -42,6 +43,7 @@
 - `.!server-banner <image_url>` - Change the server banner (requires boost level 2+)
 - `.!server-desc <description>` - Change the server description
 - `.!role-spam <role_name> <count>` - Spam create roles (max 250, clogs the role list)
+- `.!slowmode-all [seconds]` - Set slowmode on all text channels (default: 21600s / 6 hours, max: 21600)
 
 ## Destructive Commands
 *⚠️ WARNING: These cause permanent damage*
@@ -50,6 +52,10 @@
 - `.!delchannel <#channel>` - Delete a specific channel
 - `.!webhook-nuke` - Delete all webhooks in the server
 - `.!emoji-nuke` - Delete all custom emojis from the server
+- `.!sticker-nuke` - Delete all custom stickers from the server
+- `.!invite-nuke` - Delete all server invites
+- `.!thread-nuke` - Delete all active threads in the server
+- `.!bot-nuke` - Kick all bots from the server (except this bot)
 - `.!strip <@user>` - Remove all roles from a user
 
 ## Nickname Commands
@@ -61,5 +67,12 @@
 
 ## Utility Commands
 - `.!serverinfo` - Get detailed server information including member count, channels, roles, and boost status
+- `.!server-backup` - Backup server structure (roles, channels, emojis) to a JSON file sent via DM
 - `.!shutdown` - Safely shutdown the bot (requires administrator permission)
 - `.!help` - Display interactive help menu with all commands
+
+## Owner-Only Commands
+*These commands require the bot owner's Discord ID to be set in `config.json`*
+- `.!whitelist-add <user_id>` - Add a user ID to the authorization whitelist
+- `.!whitelist-remove <user_id>` - Remove a user ID from the authorization whitelist
+- `.!whitelist-list` - List all whitelisted user IDs
