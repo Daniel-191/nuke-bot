@@ -1,0 +1,7 @@
+{
+  "token": "BOT_TOKEN",
+  "prefix": ".!",
+  "owner_id": "YOUR_USER_ID_HERE",
+  "whitelist": [],
+  "language": "en"
+}
