@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>Advanced Discord Nuke Bot</b><br>
+  <b>Advanced Discord Nuke Bot</b><br> 
   Python 3.10+ • py-cord 2.6.0+
 </p> 
 
