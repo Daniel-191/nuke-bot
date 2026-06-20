@@ -1,142 +1,37 @@
-
+import asyncio
+import io
+import json
+from datetime import datetime
 
 import discord
 from discord.ext import commands
-import os
-import json
-import asyncio
-import io
-import random
-from datetime import timedelta, datetime
 from colorama import Fore, Back, Style, init
-import logging
+
+from utils.config import load_config, save_config, validate_config
+from utils.discord_helpers import (
+    make_is_authorized,
+    make_is_owner,
+    parse_duration,
+    rate_limited_action,
+    send_dm,
+)
+from utils.i18n import load_translations, t
+from utils.logging_setup import setup_logging
+from utils.proxies import configure_proxy
+from utils.runtime import active_tasks as _active_tasks
+from utils.views import HelpView
 
 
 init(autoreset=True)
 
-
-# Setup logging
-def setup_logging():
-    """Setup logging to file and console"""
-    # Create logs directory if it doesn't exist
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
-
-    # Create log filename with current date
-    log_filename = f'logs/bot_{datetime.now().strftime("%Y-%m-%d")}.log'
-
-    # Create logger
-    logger = logging.getLogger('NukeBot')
-    logger.setLevel(logging.INFO)
-
-    # Create file handler with user-friendly formatting
-    file_handler = logging.FileHandler(log_filename, encoding='utf-8')
-    file_handler.setLevel(logging.INFO)
-
-    # Create formatter
-    formatter = logging.Formatter(
-        '%(asctime)s | %(levelname)-8s | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    file_handler.setFormatter(formatter)
-
-    # Add handler to logger
-    logger.addHandler(file_handler)
-
-    return logger
-
-# Initialize logger
 logger = setup_logging()
-
-# Translation system
-translations = {}
-
-def load_translations(language="en"): # default to english
-    """Load translation file based on language setting"""
-    global translations
-    lang_file = f'lang/{language}.json'
-
-    try:
-        if os.path.exists(lang_file):
-            with open(lang_file, 'r', encoding='utf-8') as f:
-                translations = json.load(f)
-            if 'logger' in globals():  # Only log if logger exists
-                logger.info(f"Loaded language: {language}")
-        else:
-            # Fallback to English if language file not found
-            if 'logger' in globals():
-                logger.warning(f"Language file '{lang_file}' not found, falling back to English")
-            with open('lang/en.json', 'r', encoding='utf-8') as f:
-                translations = json.load(f)
-    except Exception as e:
-        if 'logger' in globals():
-            logger.error(f"Error loading translations: {e}")
-        translations = {}
-
-def t(key, **kwargs):
-    """Get translated string and replace placeholders"""
-    text = translations.get(key, key)
-    if kwargs:
-        try:
-            text = text.format(**kwargs)
-        except KeyError as e:
-            if 'logger' in globals():
-                logger.error(f"Missing translation placeholder: {e} in key '{key}'")
-    return text
-
-# Load English translations first (default, before config)
-load_translations("en")
-
-# Load configuration
-def load_config():
-    try:
-        with open('config.json', 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print(f'{Fore.RED}{t("config_not_found")}{Style.RESET_ALL}')
-        print(t("config_create_instruction"))
-        print(t("config_example"))
-        exit(1)
-    except json.JSONDecodeError:
-        print(f'{Fore.RED}{t("config_invalid_json")}{Style.RESET_ALL}')
-        exit(1)
-
-config = load_config()
-
-# Reload translations based on config language
-load_translations(config.get("language", "en"))
-
-def validate_config(cfg: dict) -> None:
-    """Warn at startup about missing or malformed config values."""
-    owner_id = cfg.get("owner_id")
-    if not owner_id:
-        print(f'{Fore.YELLOW}[CONFIG] owner_id is not set — owner-only commands will not work.{Style.RESET_ALL}')
-    else:
-        try:
-            int(str(owner_id))
-        except ValueError:
-            print(f'{Fore.RED}[CONFIG] owner_id "{owner_id}" is not a valid integer Discord ID.{Style.RESET_ALL}')
+load_translations("en", logger)
+config = load_config(t)
+load_translations(config.get("language", "en"), logger)
 
 validate_config(config)
-
-def load_proxies():
-    """Load SOCKS4 and SOCKS5 proxies from socks4.txt and socks5.txt"""
-    proxies = []
-
-    for scheme, filename in [("socks4", "socks4.txt"), ("socks5", "socks5.txt")]:
-        if not os.path.exists(filename):
-            continue
-        with open(filename, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith('#'):
-                    continue
-                # Support both plain host:port and scheme://host:port
-                if '://' not in line:
-                    line = f"{scheme}://{line}"
-                proxies.append(line)
-
-    return proxies
+is_authorized = make_is_authorized(config, logger, t)
+is_owner = make_is_owner(config, t)
 
 # Create bot instance with prefix commands
 intents = discord.Intents.default()
@@ -201,167 +96,6 @@ async def on_guild_join(guild):
 async def on_guild_remove(guild):
     """Log when bot leaves/is removed from a guild"""
     logger.info(t("bot_left_guild", guild=guild.name, guild_id=guild.id))
-
-def save_config():
-    """Write the current config dict back to config.json"""
-    with open('config.json', 'w', encoding='utf-8') as f:
-        json.dump(config, f, indent=2)
-
-# Authorization check function
-def is_authorized():
-    """Check if user is bot owner or in whitelist"""
-    async def predicate(ctx):
-        owner_id = config.get("owner_id")
-        whitelist = config.get("whitelist", [])
-
-        # Convert owner_id to int if it's a string
-        if owner_id and isinstance(owner_id, str) and owner_id.isdigit():
-            owner_id = int(owner_id)
-
-        # Check if user is owner or in whitelist
-        if ctx.author.id == owner_id or ctx.author.id in whitelist:
-            return True
-
-        # User is not authorized
-        print(f'{Fore.RED}[UNAUTHORIZED] {Fore.WHITE}{ctx.author.display_name} (ID: {ctx.author.id}) attempted to use {ctx.command.name} in {ctx.guild.name}{Style.RESET_ALL}')
-        logger.warning(t("unauthorized", user=ctx.author, user_id=ctx.author.id, command=ctx.command.name, guild=ctx.guild.name, guild_id=ctx.guild.id))
-
-        # Delete command message
-        try:
-            await ctx.message.delete()
-        except (discord.HTTPException, discord.NotFound):
-            pass
-
-        # Send unauthorized message
-        try:
-            embed = discord.Embed(
-                description=t("unauthorized_message"),
-                color=discord.Color.red()
-            )
-            await ctx.send(embed=embed, delete_after=5)
-        except discord.HTTPException:
-            pass
-
-        return False
-
-    return commands.check(predicate)
-
-def is_owner():
-    """Check if user is the bot owner (stricter than is_authorized)"""
-    async def predicate(ctx):
-        owner_id = config.get("owner_id")
-        if owner_id and isinstance(owner_id, str) and owner_id.isdigit():
-            owner_id = int(owner_id)
-        if ctx.author.id == owner_id:
-            return True
-        try:
-            await ctx.message.delete()
-        except (discord.HTTPException, discord.NotFound):
-            pass
-        embed = discord.Embed(
-            description=t("owner_only_message"),
-            color=discord.Color.red()
-        )
-        try:
-            await ctx.send(embed=embed, delete_after=5)
-        except discord.HTTPException:
-            pass
-        return False
-    return commands.check(predicate)
-
-async def send_dm(ctx, content=None, embed=None):
-    """Helper function to delete command, send ephemeral-style message, and DM"""
-    # Delete the original command message
-    try:
-        await ctx.message.delete()
-    except (discord.HTTPException, discord.NotFound):
-        pass
-
-    # Send ephemeral-style message in channel (auto-deletes after 3 seconds)
-    try:
-        if embed:
-            await ctx.send(embed=embed, delete_after=3)
-        else:
-            await ctx.send(content, delete_after=3)
-    except discord.HTTPException:
-        pass
-
-    # Also send a DM to the user
-    try:
-        if embed:
-            await ctx.author.send(embed=embed)
-        else:
-            await ctx.author.send(content)
-    except discord.Forbidden:
-        # DMs are disabled, but they already got the channel message
-        pass
-
-async def rate_limited_action(coro_fn):
-    """Call coro_fn(), retrying once after the Discord-specified delay on a 429. Returns True on success."""
-    try:
-        await coro_fn()
-        return True
-    except discord.HTTPException as e:
-        if e.status == 429:
-            await asyncio.sleep(getattr(e, 'retry_after', 1.0))
-            try:
-                await coro_fn()
-                return True
-            except (discord.HTTPException, discord.Forbidden):
-                return False
-        return False
-    except discord.Forbidden:
-        return False
-
-def parse_duration(duration: str):
-    """Parse a duration string (e.g. 10m, 1h, 30s, 1d) into a timedelta. Returns None on invalid input."""
-    time_units = {"s": 1, "m": 60, "h": 3600, "d": 86400}
-    try:
-        unit = duration[-1]
-        amount = int(duration[:-1])
-        if unit not in time_units or amount <= 0:
-            return None
-        return timedelta(seconds=amount * time_units[unit])
-    except (ValueError, IndexError):
-        return None
-
-# Tracks long-running background tasks so they can be cancelled (e.g. spam, brainfuck)
-_active_tasks: dict[str, asyncio.Task] = {}
-
-class HelpView(discord.ui.View):
-    def __init__(self, pages, author):
-        super().__init__(timeout=60)
-        self.pages = pages
-        self.current_page = 0
-        self.author = author
-        self.update_buttons()
-
-    def update_buttons(self):
-        # Disable/enable buttons based on current page
-        self.previous_button.disabled = self.current_page == 0
-        self.next_button.disabled = self.current_page == len(self.pages) - 1
-
-    def get_embed(self):
-        return self.pages[self.current_page]
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        # Only allow the command author to use buttons
-        if interaction.user.id != self.author.id:
-            await interaction.response.send_message(t("button_unauthorized"), ephemeral=True)
-            return False
-        return True
-
-    @discord.ui.button(label="◀", style=discord.ButtonStyle.primary)
-    async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.current_page -= 1
-        self.update_buttons()
-        await interaction.response.edit_message(embed=self.get_embed(), view=self)
-
-    @discord.ui.button(label="▶", style=discord.ButtonStyle.primary)
-    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.current_page += 1
-        self.update_buttons()
-        await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
 @is_authorized()
 @bot.command(name='help')
@@ -507,7 +241,7 @@ async def help_command(ctx):
     pages.append(embed9)
 
     # Create view and send message
-    view = HelpView(pages, ctx.author)
+    view = HelpView(pages, ctx.author, t)
 
     # Send to DM
     try:
@@ -2849,7 +2583,7 @@ async def whitelist_add(ctx, user_id: int):
 
     whitelist.append(user_id)
     config["whitelist"] = whitelist
-    save_config()
+    save_config(config)
 
     print(f'{Fore.GREEN}[WHITELIST] {Fore.WHITE}{ctx.author.display_name} added {user_id} to whitelist{Style.RESET_ALL}')
     logger.info(f"Whitelist: {ctx.author} (ID: {ctx.author.id}) added user ID {user_id}")
@@ -2882,7 +2616,7 @@ async def whitelist_remove(ctx, user_id: int):
 
     whitelist.remove(user_id)
     config["whitelist"] = whitelist
-    save_config()
+    save_config(config)
 
     print(f'{Fore.YELLOW}[WHITELIST] {Fore.WHITE}{ctx.author.display_name} removed {user_id} from whitelist{Style.RESET_ALL}')
     logger.info(f"Whitelist: {ctx.author} (ID: {ctx.author.id}) removed user ID {user_id}")
@@ -2935,21 +2669,6 @@ if __name__ == "__main__":
     else:
         print(f'{Fore.CYAN}{t("token_loaded")}{Style.RESET_ALL}')
 
-        if config.get("proxies", False):
-            proxies = load_proxies()
-            if proxies:
-                try:
-                    from aiohttp_socks import ProxyConnector
-                    selected_proxy = random.choice(proxies)
-                    bot.http.connector = ProxyConnector.from_url(selected_proxy)
-                    print(f'{Fore.CYAN}[PROXY] {Fore.WHITE}Using proxy: {selected_proxy} ({len(proxies)} total loaded){Style.RESET_ALL}')
-                    logger.info(f"Proxy enabled: {selected_proxy} ({len(proxies)} proxies loaded)")
-                except ImportError:
-                    print(f'{Fore.YELLOW}[PROXY] aiohttp_socks is not installed — proxies disabled. Run: pip install aiohttp_socks{Style.RESET_ALL}')
-                    logger.warning("aiohttp_socks not installed, proxies disabled")
-            else:
-                print(f'{Fore.YELLOW}[PROXY] Proxies enabled in config but no proxies found in socks4.txt / socks5.txt{Style.RESET_ALL}')
-        else:
-            print(f'{Fore.CYAN}[PROXY] {Fore.WHITE}Proxies disabled — set "proxies": true in config.json to enable{Style.RESET_ALL}')
+        configure_proxy(bot, config, logger)
 
         bot.run(token)
