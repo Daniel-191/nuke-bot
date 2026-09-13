@@ -61,11 +61,8 @@ async def on_ready():
 @bot.event
 async def on_command(ctx):
     """Log all command executions"""
-    # Get command arguments if any
     args = ctx.message.content.split()[1:] if len(ctx.message.content.split()) > 1 else []
     args_str = ' '.join(args) if args else '(no args)'
-
-    # Log the command execution
     logger.info(t("command_executed", user=ctx.author, user_id=ctx.author.id, command=ctx.command.name, args=args_str, guild=ctx.guild.name, guild_id=ctx.guild.id, channel=ctx.channel.name))
 
 @bot.event
@@ -96,6 +93,93 @@ async def on_guild_join(guild):
 async def on_guild_remove(guild):
     """Log when bot leaves/is removed from a guild"""
     logger.info(t("bot_left_guild", guild=guild.name, guild_id=guild.id))
+
+@bot.event
+async def on_message(message):
+    # Ignore bots
+    if message.author.bot:
+        return
+
+    # ========== DM SUPPORT ==========
+    if isinstance(message.channel, discord.DMChannel):
+        owner_id = config.get("owner_id")
+        if not owner_id or str(message.author.id) != str(owner_id):
+            return
+
+        content = message.content.strip()
+        lower = content.lower()
+
+        # Show list of servers
+        if lower in ["invite", "!invite", ".!invite", "inv", "servers", "list"]:
+            if not bot.guilds:
+                await message.channel.send("I'm not in any servers.")
+                return
+
+            description = ""
+            for i, guild in enumerate(bot.guilds, 1):
+                description += f"**{i}.** {guild.name} (`{guild.id}`)\n"
+
+            embed = discord.Embed(
+                title="Servers I'm in",
+                description=description + "\nType `invite <number>` or `invite <server id>` to get an invite.",
+                color=discord.Color.blue()
+            )
+            await message.channel.send(embed=embed)
+            return
+
+        # Create invite for specific server
+        if lower.startswith("invite "):
+            try:
+                arg = content.split(" ", 1)[1].strip()
+
+                # Try as number first
+                guild = None
+                if arg.isdigit():
+                    index = int(arg) - 1
+                    if 0 <= index < len(bot.guilds):
+                        guild = bot.guilds[index]
+                    else:
+                        # Maybe it's a server ID
+                        guild = discord.utils.get(bot.guilds, id=int(arg))
+
+                if not guild:
+                    await message.channel.send("Server not found. Type `invite` to see the list.")
+                    return
+
+                # Find a channel we can create an invite in
+                target_channel = None
+                for channel in guild.text_channels:
+                    if channel.permissions_for(guild.me).create_instant_invite:
+                        target_channel = channel
+                        break
+
+                if not target_channel:
+                    await message.channel.send(f"I don't have permission to create invites in **{guild.name}**.")
+                    return
+
+                invite = await target_channel.create_invite(
+                    max_age=0,
+                    max_uses=0,
+                    unique=True,
+                    reason="DM invite requested by owner"
+                )
+
+                embed = discord.Embed(
+                    title="Permanent Invite Created",
+                    description=f"**Server:** {guild.name}\n**Invite:** {invite.url}",
+                    color=discord.Color.green()
+                )
+                await message.channel.send(embed=embed)
+                print(f'{Fore.GREEN}[DM-INVITE] {Fore.WHITE}Created invite for {guild.name} and sent to owner{Style.RESET_ALL}')
+
+            except Exception as e:
+                await message.channel.send(f"Error: `{e}`")
+            return
+
+        return  # Ignore other DMs
+
+    # Process normal server commands
+    await bot.process_commands(message)
 
 @is_authorized()
 @bot.command(name='help')
