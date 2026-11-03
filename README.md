@@ -2,7 +2,7 @@
   <img src="https://github.com/user-attachments/assets/2043f7b9-b53c-4899-bd5a-4963e7997e9b" alt="Nuke Bot banner" /> 
 </p> 
 
-<p align="center">
+<p align="center">n 
   <b>Advanced Discord Nuke Bot</b><br> 
   Python 3.10+ • py-cord 2.6.0+ 
 </p>  
